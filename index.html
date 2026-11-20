@@ -56,11 +56,19 @@ let userMarker=null,accuracyCircle=null,stopLayer=null,lastRefreshAt=0;
 const gpsDot=document.getElementById('gpsDot'),gpsTitle=document.getElementById('gpsTitle'),gpsDetail=document.getElementById('gpsDetail'),gpsMessage=document.getElementById('gpsMessage'),tramCount=document.getElementById('tramCount'),tramList=document.getElementById('tramList'),updatedAt=document.getElementById('updatedAt'),mapState=document.getElementById('mapState'),refreshBtn=document.getElementById('refreshBtn');
 
 function safeColor(value){return /^#[0-9a-f]{6}$/i.test(String(value||''))?value:'#55d6b4'}
+function displayRouteNumber(routeName){
+  const name=String(routeName||'').trim();
+  const match=name.match(/^[TТ]\s*0*(\d+)$/i);
+  if(match)return String(Number(match[1]));
+  const digits=name.match(/^0*(\d+)$/);
+  if(digits)return String(Number(digits[1]));
+  return name;
+}
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
-function makeTramIcon(route){return L.divIcon({className:'tram-div-icon',html:'<div class="tram-pin" style="--route-color:'+safeColor(route.color)+'"><span class="tram-symbol">🚋</span><span class="tram-route">'+escapeHtml(route.short_name||'Трамвай')+'</span></div>',iconSize:[90,34],iconAnchor:[45,17]})}
+function makeTramIcon(route){return L.divIcon({className:'tram-div-icon',html:'<div class="tram-pin" style="--route-color:'+safeColor(route.color)+'"><span class="tram-symbol">🚋</span><span class="tram-route">'+escapeHtml(displayRouteNumber(route.short_name||'Трамвай'))+'</span></div>',iconSize:[90,34],iconAnchor:[45,17]})}
 function makeVehiclePopup(route,vehicle){
   const box=document.createElement('div');
-  const title=document.createElement('strong');title.textContent='Трамвай '+(route.short_name||'');
+  const title=document.createElement('strong');title.textContent='Трамвай '+displayRouteNumber(route.short_name||'');
   const number=document.createElement('div');number.textContent='GPS ID вагона: '+(vehicle.id==null?'невідомий':vehicle.id);
   const direction=document.createElement('div');direction.textContent='Напрямок: '+(vehicle.direction===0?'прямий':vehicle.direction===1?'зворотний':'невідомий');
   box.append(title,number,direction);
@@ -137,7 +145,7 @@ async function refreshVehicles(){
         const key=route.short_name+'::'+String(vehicle.id);seenVehicles.add(key);freshCount++;
         let entry=vehicleMarkers.get(key);
         if(!entry){
-          const marker=L.marker([lat,lng],{icon:makeTramIcon(route),title:'Трамвай '+route.short_name}).addTo(map);
+          const marker=L.marker([lat,lng],{icon:makeTramIcon(route),title:'Трамвай '+displayRouteNumber(route.short_name)}).addTo(map);
           entry={marker:marker,routeName:route.short_name,animation:null};
           vehicleMarkers.set(key,entry);
         }else{
@@ -152,8 +160,8 @@ async function refreshVehicles(){
     tramCount.textContent=String(vehicleMarkers.size);
     updatedAt.textContent='Оновлено: '+new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' · плавний рух, оновлення GPS кожні 30 секунд';
     tramList.replaceChildren();
-    const rows=[];vehicleMarkers.forEach(function(entry){rows.push({routeName:entry.routeName,marker:entry.marker})});
-    rows.sort(function(a,b){return a.routeName.localeCompare(b.routeName,'uk')});
+    const rows=[];vehicleMarkers.forEach(function(entry){rows.push({routeName:displayRouteNumber(entry.routeName),marker:entry.marker})});
+    rows.sort(function(a,b){return a.routeName.localeCompare(b.routeName,'uk',{numeric:true})});
     rows.slice(0,12).forEach(function(item){
       const row=document.createElement('div');row.className='tram-row';
       const route=document.createElement('strong');route.textContent='🚋 '+item.routeName;
