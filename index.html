@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d151d">
 <title>Lviv Transport Tracker — транспорт Львова</title>
+<!-- LTT update: seasonal themes, auto night map, private trip tracker, local profile -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{color-scheme:dark;--bg:#0d151d;--panel:#111e28;--card:#192934;--line:#30424c;--text:#edf5f8;--muted:#a9bac5;--mint:#55d6b4}
@@ -36,12 +37,69 @@ body.light-theme #routeSearchInput{background:#fff;color:#172832;border-color:#c
 .user-dot{width:18px;height:18px;border:3px solid white;border-radius:50%;background:#35cba7;box-shadow:0 0 0 7px #35cba744}.vehicle-div-icon{background:transparent;border:0}.vehicle-pin{display:flex;align-items:center;gap:4px;width:max-content;max-width:110px;padding:5px 7px;border-radius:10px;background:#12232def;border:2px solid var(--route-color,#55d6b4);box-shadow:0 3px 12px #0008;color:white;white-space:nowrap}.vehicle-symbol{font-size:15px;line-height:1}.vehicle-route{font-size:10px;font-weight:900;color:white}.stop-dot{width:12px;height:12px;border:2px solid white;border-radius:50%;background:#5599ef;box-shadow:0 1px 7px #0008}.nearby-stop-dot{width:14px;height:14px;border:2px solid white;border-radius:50%;background:#f0b95b;box-shadow:0 1px 8px #000a}
 .leaflet-control-zoom a{color:#eaf2f6!important;background:#14212b!important;border-color:#ffffff20!important}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#13212b;color:#edf4f8}.leaflet-popup-content{font-size:12px;line-height:1.55}.leaflet-popup-content strong{color:#72dfc2}.leaflet-tooltip{background:#12232d;color:#edf5f8;border:1px solid #435761}.leaflet-tooltip:before{border-top-color:#435761}
 .footer{border-top:1px solid #263641;margin-top:17px;padding-top:13px;color:#8295a3;font-size:10px;line-height:1.55}.footer a{color:#a9dcd0;text-decoration:none}
+.setting-select{width:100%;padding:10px;border-radius:9px;background:#14232d;color:#edf5f8;border:1px solid #3c5662}
 /* Світла тема */
 body.light-theme{--bg:#eef3f5;--panel:#ffffff;--card:#f5f8fa;--line:#d4e0e5;--text:#172832;--muted:#526773;color:var(--text);color-scheme:light}
 body.light-theme .sidebar{border-right-color:#d4e0e5}body.light-theme .card{background:#f5f8fa;border-color:#d4e0e5}body.light-theme .tram-row,body.light-theme .arrival-row{background:#e8eff2;border-color:#cbd9df}body.light-theme .tram-row strong,body.light-theme .arrival-route{color:#172832}body.light-theme .detail,body.light-theme #message,body.light-theme #stopInfo,body.light-theme #gpsMessage,body.light-theme #routeMessage{color:#526773}body.light-theme .status{background:#e8f5ef;border-color:#b9dfcc}body.light-theme .status span{color:#38584a}body.light-theme .footer{border-color:#d4e0e5;color:#607783}body.light-theme .small{color:#607783}body.light-theme .card select{background:#fff!important;color:#172832!important;border-color:#cbd9df!important}
 body.light-theme .vehicle-pin-minimal,body.light-theme .vehicle-pin-modern{background:#182a35f2;color:#fff}
 
 @media(max-width:760px){body{overflow:auto}.app{display:flex;flex-direction:column;height:auto;min-height:100vh}.map-wrap{order:0;height:54vh;min-height:370px}#map{height:100%}.sidebar{order:1;border:0;border-top:1px solid #263641;padding:18px}.map-label{top:10px;left:10px}.map-state{top:10px;right:10px}}
+
+/* Seasonal themes, night automation, own trip and local-only profile */
+.trip-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.trip-stat{padding:11px;border-radius:11px;background:#14232d;border:1px solid #2b3d47;display:grid;gap:7px}
+.trip-stat span{font-size:10px;color:var(--muted)}.trip-stat strong{font-size:18px;color:var(--mint);font-variant-numeric:tabular-nums}
+.setting-toggle{display:flex;align-items:flex-start;gap:9px;margin:8px 0 12px;color:var(--text);font-size:11px;line-height:1.45;cursor:pointer}
+.setting-toggle input{margin:1px 0 0;accent-color:#55d6b4}
+body.light-theme .trip-stat{background:#e8eff2;border-color:#cbd9df}
+.profile-tools{position:absolute;z-index:510;top:15px;right:15px}
+.profile-tools button{width:auto;min-width:150px;margin:0;padding:10px 13px;box-shadow:0 5px 18px #0005;display:flex;align-items:center;justify-content:center;gap:8px}
+.profile-avatar-small{width:22px;height:22px;border-radius:50%;object-fit:cover}
+.map-state{top:64px;right:15px}
+.map-tools{top:112px}
+.profile-modal[hidden]{display:none}
+.profile-modal{position:fixed;inset:0;z-index:10000;background:#06111bd9;display:grid;place-items:center;padding:18px}
+.profile-dialog{width:min(420px,100%);max-height:90vh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 60px #0008}
+.profile-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.profile-dialog-head h2{font-size:17px;margin:0 0 12px}
+.profile-close{width:34px;height:34px;padding:0;margin:0;background:#263b46;color:#fff;font-size:22px}
+.profile-dialog input[type="text"],.profile-dialog input:not([type]){width:100%;padding:12px;border-radius:10px;background:#14232d;color:#edf5f8;border:1px solid #3c5662;margin:6px 0 13px}
+.profile-dialog input[type="file"]{width:100%;font-size:11px;margin:6px 0 13px;color:var(--text)}
+.profile-preview-wrap{width:88px;height:88px;margin:4px auto 15px;border-radius:50%;overflow:hidden;border:3px solid var(--mint);background:#243b46;display:grid;place-items:center}
+.profile-preview-wrap img{width:100%;height:100%;object-fit:cover}.profile-preview-wrap #profileAvatarFallback{font-size:34px}
+.profile-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.profile-dialog-actions button{margin:5px 0}
+.profile-dialog .small{line-height:1.5}
+body.light-theme .profile-dialog{background:#fff;color:#172832}
+body.light-theme .profile-dialog input:not([type="file"]){background:#fff;color:#172832;border-color:#cbd9df}
+body.season-summer{--bg:#f6f3e8;--panel:#fff9e9;--card:#fffdf4;--line:#ead8ad;--text:#463b26;--muted:#7b6b4d;--mint:#e8a832;color-scheme:light}
+body.season-summer .sidebar{border-color:#ead8ad}
+body.season-summer .card{box-shadow:0 5px 18px #b78b3214}
+body.season-summer .brand-icon{background:linear-gradient(145deg,#ffe18c,#f0a52c)}
+body.season-summer .status{background:#fff1cf;border-color:#edcf87}
+body.season-summer .status span{color:#725b2d}
+body.season-summer .trip-stat{background:#fff5d8;border-color:#ead8ad}
+body.season-summer .trip-stat strong{color:#ad7410}
+body.season-summer .vehicle-pin,body.season-summer .vehicle-pin-modern,body.season-summer .vehicle-pin-minimal{box-shadow:0 4px 18px #b87a2738}
+body.season-summer .setting-select,body.season-summer #routeSearchInput{background:#fff;color:#463b26;border-color:#d9bd7c}
+body.season-summer .tram-row,body.season-summer .arrival-row,body.season-summer .route-option{background:#fff8e5;border-color:#ead8ad}
+body.season-summer .route-option-main strong,body.season-summer .tram-row strong{color:#463b26}
+body.season-summer .setting-toggle{color:#463b26}
+body.season-winter{--bg:#eaf4fc;--panel:#f7fbff;--card:#f0f8ff;--line:#c8deef;--text:#203c54;--muted:#58748a;--mint:#64bde8;color-scheme:light}
+body.season-winter .sidebar{border-color:#c8deef}
+body.season-winter .card{box-shadow:0 5px 18px #4f91bd12}
+body.season-winter .brand-icon{background:linear-gradient(145deg,#dcf5ff,#79c9ec)}
+body.season-winter .status{background:#e4f5ff;border-color:#b9dff3}
+body.season-winter .status span{color:#365e78}
+body.season-winter .trip-stat{background:#e6f4ff;border-color:#c8deef}
+body.season-winter .trip-stat strong{color:#287eaf}
+body.season-winter .vehicle-pin,body.season-winter .vehicle-pin-modern,body.season-winter .vehicle-pin-minimal{box-shadow:0 4px 18px #448dc044}
+body.season-winter .setting-select,body.season-winter #routeSearchInput{background:#fff;color:#203c54;border-color:#b7d2e5}
+body.season-winter .tram-row,body.season-winter .arrival-row,body.season-winter .route-option{background:#f8fcff;border-color:#c8deef}
+body.season-winter .route-option-main strong,body.season-winter .tram-row strong{color:#203c54}
+body.season-winter .setting-toggle{color:#203c54}
+body.season-winter .map-label,body.season-winter .map-state{border-color:#d3e9f7}
+body.season-summer .map-label,body.season-summer .map-state{border-color:#f3d99e}
+
 </style>
 </head>
 <body>
@@ -56,6 +114,17 @@ body.light-theme .vehicle-pin-minimal,body.light-theme .vehicle-pin-modern{backg
   <section class="card" id="routeCard"><h2 id="selectedRouteTitle">🗺️ Лінія маршруту</h2><p id="routeMessage">Натисни на трамвай або автобус на карті чи у списку, щоб побачити його маршрут.</p><div class="route-line-legend" id="routeLegend" hidden>Суцільна лінія — напрямок 1. Пунктир — зворотний напрямок. Натисни на позначку зупинки, щоб побачити прибуття.</div><button class="secondary" id="filterRouteBtn" type="button" disabled>Показувати тільки цей маршрут</button><button class="secondary" id="clearRouteBtn" type="button" hidden>Приховати лінію маршруту</button></section>
   <section class="card"><h2>📍 Моє місце</h2><button id="locateBtn">Показати мене на карті</button><p id="message">Натисни кнопку, щоб показати своє місце та найближчі зупинки в радіусі 10 км.</p></section>
   <section class="card"><h2>🚏 Найближчі зупинки — до 10 км</h2><div id="nearbyStopsList"><div class="nearby-empty">Зупинки з’являться тут після натискання «Показати мене на карті».</div></div></section>
+  <section class="card" id="tripCard">
+    <h2 id="tripHeading">🚶 Моя поїздка</h2>
+    <p class="detail" id="tripPrivacyNote">Точки твоєї поїздки не надсилаються на сервер. У цьому браузері зберігається тільки пройдена відстань.</p>
+    <button id="tripStartBtn" type="button" disabled>▶️ Їхати</button>
+    <p id="tripStatus" class="small">Спочатку натисни «Показати мене на карті» та дозволь геолокацію.</p>
+    <div class="trip-stat-grid">
+      <div class="trip-stat"><span id="tripTodayLabel">Сьогодні</span><strong id="tripToday">0 м</strong></div>
+      <div class="trip-stat"><span id="tripTotalLabel">За весь час</span><strong id="tripTotal">0 м</strong></div>
+    </div>
+    <p class="small" id="tripLocalNote">Це особиста статистика в цьому браузері, не загальний рейтинг користувачів.</p>
+  </section>
   <section class="card"><h2>🚏 Усі зупинки на карті</h2><button class="secondary" id="stopsBtn">Завантажити зупинки</button><p id="stopInfo">Зупинки ще не завантажені.</p></section>
   <section class="card"><h2>⚙️ Налаштування</h2>
     <label for="languageSelect" class="detail" id="languageLabel">Мова інтерфейсу</label>
@@ -66,11 +135,33 @@ body.light-theme .vehicle-pin-minimal,body.light-theme .vehicle-pin-modern{backg
     <select id="vehicleStyleSelect" class="setting-select"><option value="classic">Класичні — з емодзі</option><option value="minimal">Мінімалістичні</option><option value="modern">Сучасні картки</option><option value="mono">Лаконічні літери</option></select>
     <label for="refreshRate" class="detail" id="refreshRateLabel">Частота оновлення GPS</label>
     <select id="refreshRate" class="setting-select"><option value="30">Кожні 30 секунд</option><option value="60">Кожні 60 секунд</option><option value="90">Кожні 90 секунд</option></select>
-    <button class="secondary" id="themeBtn" type="button">☀️ Увімкнути світлу тему</button><p class="small" id="settingsMessage">Налаштування застосовуються одразу.</p>
+    <label for="seasonThemeSelect" class="detail" id="seasonThemeLabel">Сезонне оформлення</label>
+    <select id="seasonThemeSelect" class="setting-select"><option value="none">Звичайне оформлення</option><option value="summer">☀️ Літній стиль</option><option value="winter">❄️ Зимовий стиль</option></select>
+    <label class="setting-toggle"><input id="autoNightToggle" type="checkbox" checked><span id="autoNightLabel">Автоматичний нічний режим карти (20:00–06:00)</span></label>
+    <p class="small" id="seasonThemeNote">Літній і зимовий стилі зараз доступні безкоштовно. Оплата в цьому сайті не підключена.</p>
+    <button class="secondary" id="themeBtn" type="button">☀️ Увімкнути світлу тему</button>
+    <p class="small" id="settingsMessage">Налаштування застосовуються одразу.</p>
   </section>
   <div class="footer">GPS і прогнози прибуття: відкриті GTFS-Realtime-дані через <a href="https://lad.lviv.ua/terms" target="_blank" rel="noreferrer">API Транспорту Львова</a> · <a href="https://data.gov.ua/dataset/lviv-public-transport-gtfs-real-time" target="_blank" rel="noreferrer">джерело даних</a> · CC BY 4.0.<br>Карта: © OpenStreetMap contributors. Час прибуття може змінюватися.</div>
 </aside>
-<main class="map-wrap" id="mapWrap"><div id="map"></div><div class="map-label">🗺️ Львів, Україна</div><div class="map-state" id="mapState">🚋 Режим трамваїв</div><div class="map-tools"><button class="secondary" id="fullscreenBtn" type="button">⛶ На весь екран</button></div></main>
+<main class="map-wrap" id="mapWrap"><div id="map"></div><div class="map-label">🗺️ Львів, Україна</div><div class="map-state" id="mapState">🚋 Режим трамваїв</div><div class="profile-tools"><button class="secondary" id="profileBtn" type="button">👤 Мій профіль</button></div><div class="map-tools"><button class="secondary" id="fullscreenBtn" type="button">⛶ На весь екран</button></div></main>
+</div>
+
+<div class="profile-modal" id="profileModal" hidden>
+  <div class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="profile-dialog-head">
+      <h2 id="profileModalTitle">👤 Мій профіль</h2>
+      <button class="profile-close" id="profileCloseBtn" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="small" id="profileLocalWarning">Локальний профіль тільки в цьому браузері. Це не справжній акаунт і не синхронізується між пристроями.</p>
+    <label for="profileNickname" class="detail" id="profileNicknameLabel">Нікнейм</label>
+    <input id="profileNickname" maxlength="24" autocomplete="nickname" placeholder="Введи нікнейм">
+    <label for="profileAvatarInput" class="detail" id="profileAvatarLabel">Аватарка</label>
+    <input id="profileAvatarInput" type="file" accept="image/png,image/jpeg,image/webp">
+    <div class="profile-preview-wrap"><img id="profileAvatarPreview" alt="Avatar preview" hidden><div id="profileAvatarFallback">👤</div></div>
+    <div class="profile-dialog-actions"><button class="secondary" id="profileCancelBtn" type="button">Скасувати</button><button id="profileSaveBtn" type="button">Зберегти профіль</button></div>
+    <p class="small" id="profileMessage"></p>
+  </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -90,13 +181,37 @@ const MAP_STYLES={
   satellite:{name:'Esri World Imagery',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maxNativeZoom:19,attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community'}
 };
 let currentMapStyle='standard';let currentVehicleStyle='classic';let baseTileLayer=null;
+let effectiveMapStyle=null;
+let autoNightEnabled=true;
+let currentSeason='none';
+try{
+  autoNightEnabled=localStorage.getItem('lvivAutoNightV1')!=='false';
+  const savedSeason=localStorage.getItem('lvivSeasonThemeV1');
+  if(['none','summer','winter'].includes(savedSeason))currentSeason=savedSeason;
+}catch(error){}
 try{const savedMapStyle=localStorage.getItem('lvivMapStyleV1');if(MAP_STYLES[savedMapStyle])currentMapStyle=savedMapStyle;const savedVehicleStyle=localStorage.getItem('lvivVehicleStyleV1');if(['classic','minimal','modern','mono'].includes(savedVehicleStyle))currentVehicleStyle=savedVehicleStyle}catch(error){}
-function setMapStyle(styleKey){
-  const style=MAP_STYLES[styleKey]||MAP_STYLES.standard;currentMapStyle=styleKey in MAP_STYLES?styleKey:'standard';
+function isNightHours(){
+  const hour=new Date().getHours();
+  return hour>=20||hour<6;
+}
+function applyMapTiles(){
+  const wantedStyle=autoNightEnabled&&isNightHours()?'dark':currentMapStyle;
+  if(effectiveMapStyle===wantedStyle)return;
+  const style=MAP_STYLES[wantedStyle]||MAP_STYLES.standard;
   if(baseTileLayer)map.removeLayer(baseTileLayer);
   baseTileLayer=L.tileLayer(style.url,{maxZoom:19,maxNativeZoom:style.maxNativeZoom,attribution:style.attribution,updateWhenIdle:true,keepBuffer:3}).addTo(map);
-  try{localStorage.setItem('lvivMapStyleV1',currentMapStyle)}catch(error){}
+  effectiveMapStyle=wantedStyle;
   mapStyleSelect.value=currentMapStyle;
+}
+function setMapStyle(styleKey){
+  currentMapStyle=styleKey in MAP_STYLES?styleKey:'standard';
+  try{localStorage.setItem('lvivMapStyleV1',currentMapStyle)}catch(error){}
+  applyMapTiles();
+}
+function setAutoNightMode(enabled){
+  autoNightEnabled=!!enabled;
+  try{localStorage.setItem('lvivAutoNightV1',autoNightEnabled?'true':'false')}catch(error){}
+  applyMapTiles();
 }
 
 L.control.zoom({position:'bottomright'}).addTo(map);
@@ -153,11 +268,110 @@ const fullscreenBtn=document.getElementById('fullscreenBtn');
 const languageSelect=document.getElementById('languageSelect');
 const mapStyleSelect=document.getElementById('mapStyleSelect');
 const vehicleStyleSelect=document.getElementById('vehicleStyleSelect');
+const seasonThemeSelect=document.getElementById('seasonThemeSelect');
+const autoNightToggle=document.getElementById('autoNightToggle');
+const tripStartBtn=document.getElementById('tripStartBtn');
+const tripStatus=document.getElementById('tripStatus');
+const tripToday=document.getElementById('tripToday');
+const tripTotal=document.getElementById('tripTotal');
+const profileBtn=document.getElementById('profileBtn');
+const profileModal=document.getElementById('profileModal');
+const profileNickname=document.getElementById('profileNickname');
+const profileAvatarInput=document.getElementById('profileAvatarInput');
+const profileAvatarPreview=document.getElementById('profileAvatarPreview');
+const profileAvatarFallback=document.getElementById('profileAvatarFallback');
+const profileMessage=document.getElementById('profileMessage');
 let currentLanguage='uk';
 try{const savedLanguage=localStorage.getItem('lvivLanguageV1');if(savedLanguage==='en'||savedLanguage==='uk')currentLanguage=savedLanguage}catch(error){}
 const tx=function(uk,en){return currentLanguage==='en'?en:uk};
 
+let tripWatchId=null;
+let tripMotionTimer=null;
+let tripLastPoint=null;
+let tripLastMotionAt=0;
+let tripCurrentMeters=0;
+let tripStartedAt=0;
+let tripTotals={allTimeMeters:0,daily:{}};
+let userProfile={nickname:'',avatar:''};
+try{
+  const savedTripTotals=JSON.parse(localStorage.getItem('lvivTripTotalsV1')||'null');
+  if(savedTripTotals&&typeof savedTripTotals==='object'){
+    tripTotals.allTimeMeters=Number(savedTripTotals.allTimeMeters)||0;
+    tripTotals.daily=savedTripTotals.daily&&typeof savedTripTotals.daily==='object'?savedTripTotals.daily:{};
+  }
+  const savedProfile=JSON.parse(localStorage.getItem('lvivLocalProfileV1')||'null');
+  if(savedProfile&&typeof savedProfile==='object'){
+    userProfile.nickname=String(savedProfile.nickname||'').slice(0,24);
+    userProfile.avatar=typeof savedProfile.avatar==='string'&&savedProfile.avatar.startsWith('data:image/')?savedProfile.avatar:'';
+  }
+}catch(error){}
 
+
+
+function applySeasonTheme(themeKey){
+  currentSeason=['none','summer','winter'].includes(themeKey)?themeKey:'none';
+  document.body.classList.remove('season-summer','season-winter');
+  if(currentSeason==='summer')document.body.classList.add('season-summer');
+  if(currentSeason==='winter')document.body.classList.add('season-winter');
+  seasonThemeSelect.value=currentSeason;
+  try{localStorage.setItem('lvivSeasonThemeV1',currentSeason)}catch(error){}
+}
+function refreshProfileButton(){
+  const name=userProfile.nickname.trim();
+  const safeName=name?name:tx('Мій профіль','My profile');
+  profileBtn.replaceChildren();
+  if(userProfile.avatar){
+    const image=document.createElement('img');image.className='profile-avatar-small';image.src=userProfile.avatar;image.alt='';
+    profileBtn.appendChild(image);
+  }else{
+    const icon=document.createElement('span');icon.textContent='👤';profileBtn.appendChild(icon);
+  }
+  const label=document.createElement('span');label.textContent=safeName;profileBtn.appendChild(label);
+}
+function openProfileModal(){
+  profileNickname.value=userProfile.nickname;
+  profileMessage.textContent='';
+  if(userProfile.avatar){profileAvatarPreview.src=userProfile.avatar;profileAvatarPreview.hidden=false;profileAvatarFallback.hidden=true}
+  else{profileAvatarPreview.hidden=true;profileAvatarFallback.hidden=false}
+  profileAvatarInput.value='';
+  profileModal.hidden=false;
+}
+function closeProfileModal(){profileModal.hidden=true}
+profileBtn.addEventListener('click',openProfileModal);
+document.getElementById('profileCloseBtn').addEventListener('click',closeProfileModal);
+document.getElementById('profileCancelBtn').addEventListener('click',closeProfileModal);
+profileModal.addEventListener('click',function(event){if(event.target===profileModal)closeProfileModal()});
+document.addEventListener('keydown',function(event){if(event.key==='Escape'&&!profileModal.hidden)closeProfileModal()});
+profileAvatarInput.addEventListener('change',function(){
+  const file=profileAvatarInput.files&&profileAvatarInput.files[0];if(!file)return;
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type)){profileMessage.textContent=tx('Вибери PNG, JPG або WEBP зображення.','Choose a PNG, JPG or WEBP image.');return}
+  if(file.size>5*1024*1024){profileMessage.textContent=tx('Зображення має бути менше 5 МБ.','Image must be smaller than 5 MB.');return}
+  const reader=new FileReader();
+  reader.onload=function(){
+    const image=new Image();
+    image.onload=function(){
+      const canvas=document.createElement('canvas');const size=256;const scale=Math.min(1,size/Math.max(image.width,image.height));
+      canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+      const context=canvas.getContext('2d');context.drawImage(image,0,0,canvas.width,canvas.height);
+      userProfile.avatar=canvas.toDataURL('image/jpeg',0.82);
+      profileAvatarPreview.src=userProfile.avatar;profileAvatarPreview.hidden=false;profileAvatarFallback.hidden=true;
+      profileMessage.textContent=tx('Аватарку підготовлено. Натисни «Зберегти профіль».','Avatar ready. Press “Save profile”.');
+    };
+    image.onerror=function(){profileMessage.textContent=tx('Не вдалося відкрити це зображення.','Could not open this image.')};
+    image.src=String(reader.result||'');
+  };
+  reader.onerror=function(){profileMessage.textContent=tx('Не вдалося прочитати файл.','Could not read the file.')};
+  reader.readAsDataURL(file);
+});
+document.getElementById('profileSaveBtn').addEventListener('click',function(){
+  const nickname=profileNickname.value.trim().replace(/\s+/g,' ').slice(0,24);
+  if(!nickname){profileMessage.textContent=tx('Введи нікнейм.','Enter a nickname.');return}
+  userProfile.nickname=nickname;
+  try{localStorage.setItem('lvivLocalProfileV1',JSON.stringify(userProfile))}
+  catch(error){profileMessage.textContent=tx('Не вистачає місця в пам’яті браузера для аватарки. Вибери менше зображення.','Browser storage is full for this avatar. Choose a smaller image.');return}
+  refreshProfileButton();profileMessage.textContent=tx('Профіль збережено на цьому пристрої.','Profile saved on this device.');
+  setTimeout(closeProfileModal,500);
+});
 function safeColor(value){return /^#[0-9a-f]{6}$/i.test(String(value||''))?value:'#55d6b4'}
 function displayRouteNumber(routeName){
   const name=String(routeName||'').trim();
@@ -513,8 +727,8 @@ function applyLanguage(){
   const en=currentLanguage==='en';
   const headings=document.querySelectorAll('.sidebar .card h2');
   const headingText= en
-    ? ['Choose transport','🔎 Find a route','⭐ Favourite routes','Live vehicles','🗺️ Route line','📍 My location','🚏 Nearby stops — within 10 km','🚏 All stops on the map','⚙️ Settings']
-    : ['Вибери транспорт','🔎 Пошук маршруту','⭐ Обрані маршрути','Транспорт на маршрутах','🗺️ Лінія маршруту','📍 Моє місце','🚏 Найближчі зупинки — до 10 км','🚏 Усі зупинки на карті','⚙️ Налаштування'];
+    ? ['Choose transport','🔎 Find a route','⭐ Favourite routes','Live vehicles','🗺️ Route line','📍 My location','🚏 Nearby stops — within 10 km','🚶 My trip','🚏 All stops on the map','⚙️ Settings']
+    : ['Вибери транспорт','🔎 Пошук маршруту','⭐ Обрані маршрути','Транспорт на маршрутах','🗺️ Лінія маршруту','📍 Моє місце','🚏 Найближчі зупинки — до 10 км','🚶 Моя поїздка','🚏 Усі зупинки на карті','⚙️ Налаштування'];
   headings.forEach(function(item,index){if(headingText[index])item.textContent=headingText[index]});
   document.querySelector('.subtitle').textContent=tx('Рух транспорту Львова в реальному часі','Lviv public transport in real time');
   tramModeBtn.textContent=tx('🚋 Трамваї','🚋 Trams');busModeBtn.textContent=tx('🚌 Автобуси','🚌 Buses');
@@ -528,6 +742,30 @@ function applyLanguage(){
   document.getElementById('mapStyleLabel').textContent=tx('Стиль карти','Map style');
   document.getElementById('vehicleStyleLabel').textContent=tx('Стиль значків транспорту','Vehicle marker style');
   document.getElementById('refreshRateLabel').textContent=tx('Частота оновлення GPS','GPS refresh interval');
+  document.getElementById('seasonThemeLabel').textContent=tx('Сезонне оформлення','Seasonal theme');
+  document.getElementById('autoNightLabel').textContent=tx('Автоматичний нічний режим карти (20:00–06:00)','Automatic night map mode (8 PM–6 AM)');
+  document.getElementById('seasonThemeNote').textContent=tx('Літній і зимовий стилі зараз доступні безкоштовно. Оплата в цьому сайті не підключена.','Summer and winter themes are free for now. Payments are not connected to this website.');
+  Array.from(seasonThemeSelect.options).forEach(function(option){
+    const names=currentLanguage==='en'?{none:'Default style',summer:'☀️ Summer theme',winter:'❄️ Winter theme'}:{none:'Звичайне оформлення',summer:'☀️ Літній стиль',winter:'❄️ Зимовий стиль'};
+    option.textContent=names[option.value];
+  });
+  document.getElementById('tripHeading').textContent=tx('🚶 Моя поїздка','🚶 My trip');
+  document.getElementById('tripPrivacyNote').textContent=tx('Точки твоєї поїздки не надсилаються на сервер. У цьому браузері зберігається тільки пройдена відстань.','Your trip coordinates are not sent to a server. Only the distance is saved in this browser.');
+  document.getElementById('tripTodayLabel').textContent=tx('Сьогодні','Today');
+  document.getElementById('tripTotalLabel').textContent=tx('За весь час','All time');
+  document.getElementById('tripLocalNote').textContent=tx('Це особиста статистика в цьому браузері, не загальний рейтинг користувачів.','This is personal statistics in this browser, not a global user leaderboard.');
+  if(tripWatchId===null)tripStartBtn.textContent='▶️ '+tx('Їхати','Start trip');
+  if(tripWatchId===null&&lastKnownLocation===null)tripStatus.textContent=tx('Спочатку натисни «Показати мене на карті» та дозволь геолокацію.','First press “Show my location” and allow location access.');
+  if(tripWatchId!==null)tripStartBtn.textContent='■ '+tx('Завершити поїздку','End trip');
+  document.getElementById('profileModalTitle').textContent=tx('👤 Мій профіль','👤 My profile');
+  document.getElementById('profileLocalWarning').textContent=tx('Локальний профіль тільки в цьому браузері. Це не справжній акаунт і не синхронізується між пристроями.','Local profile on this browser only. This is not a real account and does not sync across devices.');
+  document.getElementById('profileNicknameLabel').textContent=tx('Нікнейм','Nickname');
+  document.getElementById('profileNickname').placeholder=tx('Введи нікнейм','Enter a nickname');
+  document.getElementById('profileAvatarLabel').textContent=tx('Аватарка','Avatar');
+  document.getElementById('profileSaveBtn').textContent=tx('Зберегти профіль','Save profile');
+  document.getElementById('profileCancelBtn').textContent=tx('Скасувати','Cancel');
+  profileBtn.setAttribute('aria-label',tx('Відкрити локальний профіль','Open local profile'));
+  refreshProfileButton();
   const mapNames=en?['Classic — OpenStreetMap','Light — Esri Streets','Dark — Esri Dark','Topographic','Satellite']:['Класична — OpenStreetMap','Світла — Esri Streets','Темна — Esri Dark','Топографічна','Супутник'];
   Array.from(mapStyleSelect.options).forEach(function(option,index){option.textContent=mapNames[index]});
   const iconNames=en?['Classic — emoji','Minimal','Modern badges','Monochrome letters']:['Класичні — з емодзі','Мінімалістичні','Сучасні картки','Лаконічні літери'];
@@ -549,8 +787,13 @@ themeBtn.addEventListener('click',function(){document.body.classList.toggle('lig
 languageSelect.value=currentLanguage;languageSelect.addEventListener('change',function(){currentLanguage=languageSelect.value==='en'?'en':'uk';try{localStorage.setItem('lvivLanguageV1',currentLanguage)}catch(error){}applyLanguage()});
 mapStyleSelect.value=currentMapStyle;setMapStyle(currentMapStyle);mapStyleSelect.addEventListener('change',function(){setMapStyle(mapStyleSelect.value);document.getElementById('settingsMessage').textContent=tx('Стиль карти змінено.','Map style updated.')});
 vehicleStyleSelect.value=currentVehicleStyle;vehicleStyleSelect.addEventListener('change',function(){currentVehicleStyle=vehicleStyleSelect.value;applyVehicleIconStyle();document.getElementById('settingsMessage').textContent=tx('Стиль значків транспорту змінено.','Vehicle marker style updated.')});
+seasonThemeSelect.value=currentSeason;applySeasonTheme(currentSeason);
+autoNightToggle.checked=autoNightEnabled;autoNightToggle.addEventListener('change',function(){setAutoNightMode(autoNightToggle.checked);document.getElementById('settingsMessage').textContent=autoNightEnabled?tx('Нічний стиль карти автоматично вмикатиметься з 20:00 до 06:00.','Night map style will turn on automatically from 8 PM to 6 AM.'):tx('Автоматичний нічний режим вимкнено.','Automatic night mode is off.')});
+seasonThemeSelect.addEventListener('change',function(){applySeasonTheme(seasonThemeSelect.value);document.getElementById('settingsMessage').textContent=tx('Сезонне оформлення змінено.','Seasonal theme updated.')});
+setInterval(function(){if(autoNightEnabled)applyMapTiles()},60000);
 try{if(localStorage.getItem('lvivThemeV1')==='light')document.body.classList.add('light-theme')}catch(error){}
 applyLanguage();
+refreshProfileButton();
 fullscreenBtn.addEventListener('click',async function(){
   try{
     if(document.fullscreenElement){await document.exitFullscreen()}
@@ -567,6 +810,75 @@ function distanceMeters(a,b){
   return 6371000*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 function formatDistance(meters){return meters<1000?Math.round(meters)+' м':(meters/1000).toFixed(1)+' км'}
+function dayKey(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
+function formatTripDistance(meters){
+  const value=Math.max(0,Number(meters)||0);
+  return value<1000?Math.round(value)+' м':(value/1000).toFixed(2)+' км';
+}
+function todayTripMeters(){return Number(tripTotals.daily[dayKey(new Date())])||0}
+function saveTripTotals(){
+  try{localStorage.setItem('lvivTripTotalsV1',JSON.stringify(tripTotals))}catch(error){}
+}
+function renderTripTotals(){
+  tripToday.textContent=formatTripDistance(todayTripMeters());
+  tripTotal.textContent=formatTripDistance(tripTotals.allTimeMeters);
+}
+function addTripDistance(meters){
+  if(!Number.isFinite(meters)||meters<=0)return;
+  const today=dayKey(new Date());
+  tripTotals.allTimeMeters+=meters;
+  tripTotals.daily[today]=(Number(tripTotals.daily[today])||0)+meters;
+  saveTripTotals();renderTripTotals();
+}
+function stopOwnTrip(reason){
+  if(tripWatchId!==null){navigator.geolocation.clearWatch(tripWatchId);tripWatchId=null}
+  if(tripMotionTimer){clearInterval(tripMotionTimer);tripMotionTimer=null}
+  const hadTrip=tripStartedAt>0;
+  tripLastPoint=null;tripLastMotionAt=0;tripStartedAt=0;
+  tripStartBtn.disabled=!lastKnownLocation;
+  tripStartBtn.textContent='▶️ '+tx('Їхати','Start trip');
+  if(reason)tripStatus.textContent=reason;
+  else if(hadTrip)tripStatus.textContent=tx('Поїздку завершено. Дистанцію збережено на цьому пристрої.','Trip ended. Distance saved on this device.');
+}
+function startOwnTrip(){
+  if(!lastKnownLocation||!navigator.geolocation){tripStatus.textContent=tx('Спочатку дозволь геолокацію через кнопку «Показати мене на карті».','Allow location first with the “Show my location” button.');return}
+  if(!document.visibilityState||document.visibilityState==='hidden'){tripStatus.textContent=tx('Відкрий сайт на екрані, щоб почати відстеження своєї поїздки.','Keep the site visible to start tracking your own trip.');return}
+  tripCurrentMeters=0;tripLastPoint=null;tripStartedAt=Date.now();tripLastMotionAt=Date.now();
+  tripStartBtn.disabled=false;tripStartBtn.textContent='■ '+tx('Завершити поїздку','End trip');
+  tripStatus.textContent=tx('Очікуємо GPS та рух. Якщо ти зупинишся на 3 хвилини, запис завершиться автоматично.','Waiting for GPS and movement. Tracking will stop automatically after 3 minutes without movement.');
+  tripWatchId=navigator.geolocation.watchPosition(function(position){
+    if(document.visibilityState==='hidden'){stopOwnTrip(tx('Відстеження зупинено, бо вкладка неактивна.','Tracking stopped because the tab is hidden.'));return}
+    const point={lat:position.coords.latitude,lng:position.coords.longitude};
+    if(!tripLastPoint){tripLastPoint={...point,time:position.timestamp||Date.now()};return}
+    const now=position.timestamp||Date.now();
+    const moved=distanceMeters(tripLastPoint,point);
+    const elapsed=Math.max(1,(now-tripLastPoint.time)/1000);
+    const accuracy=Number(position.coords.accuracy);
+    if(Number.isFinite(accuracy)&&accuracy<=45&&moved>=8&&moved<=300&&moved/elapsed<=45){
+      addTripDistance(moved);tripCurrentMeters+=moved;tripLastMotionAt=Date.now();
+      tripStatus.textContent=tx('Ти рухаєшся · ця поїздка: ','You are moving · this trip: ')+formatTripDistance(tripCurrentMeters);
+    }else if(moved>300||!Number.isFinite(accuracy)||accuracy>45){
+      // Ignore GPS jumps and low-accuracy fixes; do not count them as travel.
+    }
+    tripLastPoint={...point,time:now};
+  },function(error){
+    stopOwnTrip(error.code===1?tx('Доступ до геолокації втрачено. Поїздку зупинено.','Location permission was lost. Trip stopped.'):tx('GPS тимчасово недоступний. Поїздку зупинено.','GPS became unavailable. Trip stopped.'));
+  },{enableHighAccuracy:true,maximumAge:3000,timeout:20000});
+  tripMotionTimer=setInterval(function(){
+    if(Date.now()-tripLastMotionAt>=180000){
+      stopOwnTrip(tx('Руху не було 3 хвилини — поїздку завершено автоматично.','No movement for 3 minutes — trip ended automatically.'));
+    }
+  },5000);
+}
+tripStartBtn.addEventListener('click',function(){
+  if(tripWatchId!==null){stopOwnTrip(tx('Поїздку завершено вручну. Дистанцію збережено на цьому пристрої.','Trip ended manually. Distance saved on this device.'));return}
+  startOwnTrip();
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'&&tripWatchId!==null)stopOwnTrip(tx('Відстеження зупинено, бо вкладка неактивна.','Tracking stopped because the tab is hidden.'));
+});
+renderTripTotals();
+
 function setNearbyMessage(message){nearbyStopsList.replaceChildren();const item=document.createElement('div');item.className='nearby-empty';item.textContent=message;nearbyStopsList.appendChild(item)}
 async function loadNearbyStops(location,mode){
   const token=++nearbyRequestToken;
@@ -623,6 +935,8 @@ document.getElementById('locateBtn').addEventListener('click',function(){
   navigator.geolocation.getCurrentPosition(function(position){
     const point={lat:position.coords.latitude,lng:position.coords.longitude},accuracy=position.coords.accuracy;
     lastKnownLocation=point;
+    tripStartBtn.disabled=false;
+    tripStatus.textContent=tx('Геолокацію дозволено. Можна натиснути «Їхати», щоб записати власну поїздку.','Location is available. Press “Start trip” to record your own trip.');
     if(!userMarker){userMarker=L.marker([point.lat,point.lng],{icon:L.divIcon({className:'',html:'<div class="user-dot"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map).bindPopup(tx('Твоє місце','Your location'));accuracyCircle=L.circle([point.lat,point.lng],{radius:accuracy,color:'#35cba7',weight:1,fillColor:'#35cba7',fillOpacity:.08}).addTo(map)}
     else{userMarker.setLatLng([point.lat,point.lng]);accuracyCircle.setLatLng([point.lat,point.lng]).setRadius(accuracy)}
     map.flyTo([point.lat,point.lng],13,{duration:.7});
