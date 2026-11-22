@@ -1157,5 +1157,308 @@ stopsBtn.addEventListener('click',async function(){
   finally{stopsBtn.disabled=false;if(modeAtStart===currentMode)updateModeControls()}
 });
 </script>
+<script>
+/*
+  Lviv Transport Tracker — додаткові функції
+  Встав цей код у кінець основного <script> в index.html,
+  безпосередньо ПЕРЕД останнім <\/script>.
+  Працює разом із наявними змінними сайту: map, vehicleMarkers, allRoutes тощо.
+*/
+(function () {
+  'use strict';
+  if (window.__lttExtraFeaturesLoaded) return;
+  window.__lttExtraFeaturesLoaded = true;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .ltt-weather-effects{position:absolute;inset:0;z-index:460;overflow:hidden;pointer-events:none;display:none}
+    .ltt-weather-effects.rain,.ltt-weather-effects.snow,.ltt-weather-effects.fog,.ltt-weather-effects.storm{display:block}
+    .ltt-weather-layer{position:absolute;inset:-15%;opacity:0;pointer-events:none}
+    .ltt-weather-effects.rain .rain-layer,.ltt-weather-effects.storm .rain-layer{opacity:.48;background:repeating-linear-gradient(108deg,transparent 0 18px,rgba(188,224,255,.48) 19px,transparent 21px 34px);animation:ltt-rain .42s linear infinite}
+    @keyframes ltt-rain{to{transform:translate3d(-28px,38px,0)}}
+    .ltt-weather-effects.snow .snow-layer{opacity:.78;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 2px,transparent 3px),radial-gradient(circle,rgba(230,247,255,.9) 0 1.5px,transparent 2.5px),radial-gradient(circle,rgba(255,255,255,.85) 0 2.5px,transparent 3.5px);background-size:120px 130px,85px 95px,180px 160px;background-position:0 0,30px 40px,70px 10px;animation:ltt-snow 8s linear infinite}
+    @keyframes ltt-snow{to{background-position:40px 260px,5px 220px,120px 320px}}
+    .ltt-weather-effects.fog .fog-layer{opacity:.72;background:linear-gradient(110deg,transparent 4%,rgba(228,238,243,.64) 24%,rgba(240,246,248,.48) 48%,transparent 72%),linear-gradient(165deg,transparent 22%,rgba(224,236,242,.6) 48%,transparent 78%);filter:blur(18px);animation:ltt-fog 13s ease-in-out infinite alternate}
+    @keyframes ltt-fog{to{transform:translateX(9%) scale(1.08);opacity:.5}}
+    .ltt-weather-effects.storm .storm-layer{opacity:0;background:rgba(225,237,255,.55);animation:ltt-flash 7s steps(1,end) infinite}
+    @keyframes ltt-flash{0%,93%,96%,100%{opacity:0}94%,95%{opacity:.38}}
+    .ltt-weather-badge{position:absolute;z-index:520;bottom:14px;left:15px;max-width:min(75%,360px);padding:9px 12px;border-radius:12px;background:#101c25e8;color:#f3f8fb;border:1px solid #ffffff26;box-shadow:0 5px 18px #0005;font-size:11px;font-weight:700;pointer-events:none}
+    .ltt-extra-label{display:block;margin:12px 0 5px;color:var(--muted);font-size:11px}
+    .ltt-extra-select{display:block;width:100%;padding:10px;border-radius:9px;background:#14232d;color:#edf5f8;border:1px solid #3c5662}
+    body.light-theme .ltt-extra-select{background:#fff;color:#172832;border-color:#cbd9df}
+    body.light-theme .ltt-weather-badge{background:#fff;color:#172832;border-color:#cbd9df}
+    .ltt-skin-neon,.ltt-skin-retro,.ltt-skin-cute,.ltt-skin-glass{display:flex;align-items:center;justify-content:center;gap:5px;font-weight:900;white-space:nowrap}
+    .ltt-skin-neon{padding:6px 10px;border-radius:14px;background:#11162bea;border:2px solid var(--route-color);color:#fff;box-shadow:0 0 8px var(--route-color),0 0 20px var(--route-color);text-shadow:0 0 7px var(--route-color)}
+    .ltt-skin-retro{padding:6px 9px;border-radius:6px;background:#f3d99e;border:3px solid #734d2b;color:#49321e;box-shadow:3px 4px 0 #37271e;font-family:Georgia,serif}
+    .ltt-skin-cute{width:52px;height:44px;flex-direction:column;gap:0;border-radius:17px 17px 20px 20px;background:#fff1f6;border:2px solid #f29ac0;color:#633c5b;box-shadow:0 3px 9px #0005}
+    .ltt-skin-cute span{font-size:17px}.ltt-skin-cute b{font-size:10px}
+    .ltt-skin-glass{padding:6px 10px;border-radius:15px;background:rgba(23,49,66,.72);border:1px solid rgba(255,255,255,.8);color:#fff;box-shadow:0 4px 15px #0019;backdrop-filter:blur(8px)}
+    .ltt-map3d{position:absolute;inset:0;z-index:3;background:#d9e5eb}.ltt-map3d[hidden]{display:none!important}
+    .ltt-extra-map-btn{width:100%;margin:0 0 7px!important;min-width:0!important}
+    #lttTycoon[hidden]{display:none!important}
+    #lttTycoon{position:fixed;inset:0;z-index:12000;background:radial-gradient(circle at 15% 5%,#285e62,#132b39 48%,#0c1723);color:#eff8fb;overflow:auto;padding:18px}
+    .ltt-tycoon-shell{max-width:1100px;margin:0 auto}
+    .ltt-tycoon-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .ltt-tycoon-title{font-size:24px;font-weight:900;margin:0 0 5px}.ltt-tycoon-subtitle{font-size:12px;color:#b9ced7}.ltt-tycoon-top button{width:auto;min-width:115px;margin:0}
+    .ltt-tycoon-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0}
+    .ltt-tycoon-stat{padding:13px;border:1px solid #42616d;border-radius:14px;background:#16313d}.ltt-tycoon-stat span{display:block;color:#b9ced7;font-size:10px;margin-bottom:6px}.ltt-tycoon-stat strong{font-size:20px}
+    .ltt-tycoon-columns{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:14px}
+    .ltt-tycoon-panel{border:1px solid #42616d;border-radius:16px;background:#142b37;padding:15px;margin-bottom:13px}.ltt-tycoon-panel h3{font-size:14px;margin:0 0 11px}
+    .ltt-tycoon-city{min-height:250px;border-radius:13px;overflow:hidden;position:relative;padding:18px;background:linear-gradient(160deg,#8cc4be,#4b8c83 52%,#3b6f72)}
+    .ltt-tycoon-city:before,.ltt-tycoon-city:after{content:"";position:absolute;background:#344d58;border:4px solid #d0c7a5;transform:rotate(-12deg);height:22px;left:-8%;right:-8%;top:52%;box-shadow:0 0 0 3px #233b43}
+    .ltt-tycoon-city:after{transform:rotate(18deg);height:16px;top:72%;left:10%;right:-14%}
+    .ltt-tycoon-city-items{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;min-height:210px;align-items:center;text-align:center}
+    .ltt-tycoon-city-item{padding:10px 3px;border-radius:12px;background:#e8f6e7db;color:#20403d;font-size:24px;box-shadow:0 4px 12px #183b3b40}.ltt-tycoon-city-item small{display:block;font-size:9px;font-weight:800;margin-top:4px}
+    .ltt-tycoon-summary{font-size:11px;color:#d1e1e6;line-height:1.7;margin-top:9px}.ltt-tycoon-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .ltt-tycoon-actions button{margin:0;padding:11px 8px;font-size:11px;background:#6ce0bc}.ltt-tycoon-actions button.secondary{background:#294956;color:#f1f8fa;border:1px solid #52717d}
+    .ltt-tycoon-note{font-size:10px;line-height:1.5;color:#c0d1d7;margin-top:10px}.ltt-tycoon-log{font-size:11px;line-height:1.7;color:#d6e7ec;min-height:22px}
+    @media(max-width:760px){.ltt-tycoon-columns{grid-template-columns:1fr}.ltt-tycoon-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ltt-tycoon-title{font-size:20px}#lttTycoon{padding:12px}.ltt-tycoon-city-items{gap:7px}}
+    @media(prefers-reduced-motion:reduce){.ltt-weather-layer{animation:none!important}}
+  `;
+  document.head.appendChild(style);
+
+  // Add selectable vehicle skins to the existing settings control.
+  const skinSelect = document.getElementById('vehicleStyleSelect');
+  const skinOptions = [
+    ['neon', '✨ Неонові'], ['retro', '🕹️ Ретро'],
+    ['cute', '🌈 Милі'], ['glass', '💎 Скляні']
+  ];
+  if (skinSelect) {
+    skinOptions.forEach(([value, label]) => {
+      if (!Array.from(skinSelect.options).some(option => option.value === value)) {
+        const option = document.createElement('option'); option.value = value; option.textContent = label; skinSelect.appendChild(option);
+      }
+    });
+    const savedSkin = localStorage.getItem('lvivVehicleStyleV1');
+    if (skinOptions.some(([value]) => value === savedSkin)) {
+      currentVehicleStyle = savedSkin; skinSelect.value = savedSkin;
+      if (typeof applyVehicleIconStyle === 'function') applyVehicleIconStyle();
+    }
+  }
+  const originalMakeVehicleIcon = makeVehicleIcon;
+  makeVehicleIcon = function (route) {
+    if (!['neon','retro','cute','glass'].includes(currentVehicleStyle)) return originalMakeVehicleIcon(route);
+    const symbol = currentMode === 'bus' ? '🚌' : '🚋';
+    const number = escapeHtml(displayRouteNumber(route.short_name || ''));
+    const color = safeColor(route.color);
+    const className = 'ltt-skin-' + currentVehicleStyle;
+    const dimensions = {neon:[76,42,38,21],retro:[76,40,38,20],cute:[56,48,28,24],glass:[82,40,41,20]}[currentVehicleStyle];
+    return L.divIcon({
+      className: 'vehicle-div-icon',
+      html: '<div class="'+className+'" style="--route-color:'+color+'"><span>'+symbol+'</span><b>'+number+'</b></div>',
+      iconSize:[dimensions[0],dimensions[1]], iconAnchor:[dimensions[2],dimensions[3]]
+    });
+  };
+  if (skinSelect) skinSelect.addEventListener('change', function () {
+    currentVehicleStyle = skinSelect.value;
+    try { localStorage.setItem('lvivVehicleStyleV1', currentVehicleStyle); } catch (error) {}
+    if (typeof applyVehicleIconStyle === 'function') applyVehicleIconStyle();
+  });
+
+  // Build the weather selector and visual layers without changing the existing map.
+  const settingsCard = skinSelect ? skinSelect.closest('.card') : document.querySelector('.sidebar .card:last-of-type');
+  if (settingsCard && !document.getElementById('lttWeatherSelect')) {
+    const label = document.createElement('label'); label.className = 'ltt-extra-label'; label.htmlFor = 'lttWeatherSelect'; label.textContent = '🌦️ Погода на карті';
+    const select = document.createElement('select'); select.id = 'lttWeatherSelect'; select.className = 'ltt-extra-select';
+    select.innerHTML = '<option value="auto">Авто — реальна погода Львова</option><option value="clear">☀️ Ясно</option><option value="rain">🌧️ Дощ</option><option value="snow">❄️ Сніг</option><option value="fog">🌫️ Туман</option><option value="storm">⛈️ Гроза</option><option value="off">Вимкнено</option>';
+    const note = document.createElement('p'); note.className='small'; note.textContent='Автоматичний режим показує актуальну погоду Львова. Ефекти можна перемикати вручну.';
+    settingsCard.append(label, select, note);
+  }
+  const weatherSelect = document.getElementById('lttWeatherSelect');
+  const mapWrapEl = document.getElementById('mapWrap');
+  if (mapWrapEl && !document.getElementById('lttWeatherEffects')) {
+    const effects = document.createElement('div'); effects.id='lttWeatherEffects'; effects.className='ltt-weather-effects';
+    effects.innerHTML='<div class="ltt-weather-layer rain-layer"></div><div class="ltt-weather-layer snow-layer"></div><div class="ltt-weather-layer fog-layer"></div><div class="ltt-weather-layer storm-layer"></div>';
+    mapWrapEl.appendChild(effects);
+    const badge=document.createElement('div'); badge.id='lttWeatherBadge'; badge.className='ltt-weather-badge'; badge.textContent='🌦️ Львів · погоду завантажуємо…'; mapWrapEl.appendChild(badge);
+  }
+  let weatherMode = 'auto', weatherData = null;
+  try { const saved=localStorage.getItem('lvivWeatherModeV1'); if(['auto','clear','rain','snow','fog','storm','off'].includes(saved)) weatherMode=saved; } catch(error) {}
+  if (weatherSelect) weatherSelect.value=weatherMode;
+  function effectFromWeatherCode(code) {
+    if ([45,48].includes(Number(code))) return 'fog';
+    if ([71,73,75,77,85,86].includes(Number(code))) return 'snow';
+    if ([95,96,99].includes(Number(code))) return 'storm';
+    if ([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(Number(code))) return 'rain';
+    return 'clear';
+  }
+  function renderWeather() {
+    const effect = weatherMode === 'auto' ? (weatherData ? effectFromWeatherCode(weatherData.weather_code) : 'clear') : weatherMode;
+    const layer = document.getElementById('lttWeatherEffects');
+    if (layer) layer.className='ltt-weather-effects'+(['clear','off'].includes(effect)?'':' '+effect);
+    const badge=document.getElementById('lttWeatherBadge');
+    if (!badge) return;
+    if (!weatherData) { badge.textContent='🌦️ Львів · очікуємо дані погоди'; return; }
+    const descriptions={clear:'Ясно',rain:'Дощ',snow:'Сніг',fog:'Туман',storm:'Гроза',off:'Вимкнено'};
+    const displayed=weatherMode==='auto'?effect:weatherMode;
+    badge.textContent='🌦️ Львів · '+Math.round(Number(weatherData.temperature_2m))+'°C · '+descriptions[displayed]+' · вітер '+Math.round(Number(weatherData.wind_speed_10m))+' км/год'+(weatherMode==='auto'?'':' · ручний режим');
+  }
+  async function updateWeather() {
+    try {
+      const url='https://api.open-meteo.com/v1/forecast?latitude=49.8397&longitude=24.0297&current=temperature_2m,weather_code,wind_speed_10m&timezone=Europe%2FKyiv';
+      const response=await fetch(url,{cache:'no-store'});
+      if(!response.ok) throw new Error('Weather HTTP '+response.status);
+      const data=await response.json(); if(!data.current) throw new Error('No current weather');
+      weatherData=data.current; renderWeather();
+    } catch(error) {
+      const badge=document.getElementById('lttWeatherBadge'); if(badge) badge.textContent='🌦️ Не вдалося завантажити погоду · можна вибрати ефект вручну';
+    }
+  }
+  if (weatherSelect) weatherSelect.addEventListener('change',function(){weatherMode=weatherSelect.value;try{localStorage.setItem('lvivWeatherModeV1',weatherMode)}catch(error){}renderWeather()});
+  renderWeather(); updateWeather(); setInterval(updateWeather,600000);
+
+  // 3D mode: MapLibre with extruded OpenStreetMap buildings.
+  const map3dButton=document.createElement('button'); map3dButton.type='button'; map3dButton.className='secondary ltt-extra-map-btn'; map3dButton.textContent='🏙️ 3D-карта Львова';
+  const gameButton=document.createElement('button'); gameButton.type='button'; gameButton.className='secondary ltt-extra-map-btn'; gameButton.textContent='🎮 Транспортний магнат';
+  const mapTools=document.querySelector('.map-tools'); if(mapTools){mapTools.insertBefore(map3dButton,mapTools.firstChild);mapTools.insertBefore(gameButton,mapTools.children[1]||null)}
+  let map3d=null, is3d=false;
+  const map3dContainer=document.createElement('div'); map3dContainer.id='lttMap3d'; map3dContainer.className='ltt-map3d'; map3dContainer.hidden=true;
+  if(mapWrapEl) mapWrapEl.appendChild(map3dContainer);
+  function ensureMapLibre() {
+    if(window.maplibregl) return Promise.resolve();
+    if(window.__lttMapLibrePromise) return window.__lttMapLibrePromise;
+    window.__lttMapLibrePromise=new Promise((resolve,reject)=>{
+      const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css';document.head.appendChild(css);
+      const script=document.createElement('script');script.src='https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js';script.onload=resolve;script.onerror=()=>reject(new Error('MapLibre failed to load'));document.head.appendChild(script);
+    });
+    return window.__lttMapLibrePromise;
+  }
+  function map3dSync() {
+    if(!map3d||!map3d.isStyleLoaded()) return;
+    const source=map3d.getSource('ltt-vehicles');
+    if(source) {
+      const features=[];
+      vehicleMarkers.forEach(entry=>{
+        if(!entry.marker||!map.hasLayer(entry.marker)) return;
+        const route=allRoutes.find(item=>item.short_name===entry.routeName&&item.type===currentMode);
+        if(!route) return;
+        const p=entry.marker.getLatLng();
+        features.push({type:'Feature',geometry:{type:'Point',coordinates:[p.lng,p.lat]},properties:{title:(currentMode==='bus'?'🚌 ':'🚋 ')+displayRouteNumber(entry.routeName)}});
+      });
+      source.setData({type:'FeatureCollection',features});
+    }
+    const routeSource=map3d.getSource('ltt-route');
+    if(routeSource) {
+      const features=[];
+      selectedRouteLayers.forEach((line,index)=>{
+        if(index%2===1||!line.getLatLngs) return;
+        const points=[];
+        (function collect(value){if(Array.isArray(value)){value.forEach(collect);return;}if(value&&Number.isFinite(value.lat)&&Number.isFinite(value.lng))points.push([value.lng,value.lat]);})(line.getLatLngs());
+        if(points.length>1)features.push({type:'Feature',geometry:{type:'LineString',coordinates:points},properties:{}});
+      });
+      routeSource.setData({type:'FeatureCollection',features});
+    }
+  }
+  async function initializeMap3d() {
+    if(map3d) return;
+    await ensureMapLibre();
+    const center=map.getCenter();
+    map3d=new maplibregl.Map({container:map3dContainer,style:'https://tiles.openfreemap.org/styles/liberty',center:[center.lng,center.lat],zoom:Math.max(15,map.getZoom()),pitch:55,bearing:-18,maxPitch:70,attributionControl:true});
+    map3d.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
+    map3d.on('load',function(){
+      map3d.addSource('ltt-buildings',{type:'vector',url:'https://tiles.openfreemap.org/planet'});
+      const layers=map3d.getStyle().layers||[];let labelLayer;
+      for(let i=0;i<layers.length;i++){if(layers[i].type==='symbol'&&layers[i].layout&&layers[i].layout['text-field']){labelLayer=layers[i].id;break;}}
+      map3d.addLayer({id:'ltt-3d-buildings',source:'ltt-buildings','source-layer':'building',type:'fill-extrusion',minzoom:14,filter:['!=',['get','hide_3d'],true],paint:{
+        'fill-extrusion-color':['interpolate',['linear'],['coalesce',['get','render_height'],8],0,'#d7d7d1',18,'#c7b9a7',55,'#9daeb8',130,'#8098aa'],
+        'fill-extrusion-height':['interpolate',['linear'],['zoom'],14,0,15,['coalesce',['get','render_height'],8]],
+        'fill-extrusion-base':['coalesce',['get','render_min_height'],0],'fill-extrusion-opacity':.92
+      }},labelLayer);
+      map3d.addSource('ltt-vehicles',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+      map3d.addLayer({id:'ltt-vehicle-dots',type:'circle',source:'ltt-vehicles',paint:{'circle-radius':7,'circle-color':'#29cba7','circle-stroke-color':'#fff','circle-stroke-width':2}});
+      map3d.addLayer({id:'ltt-vehicle-names',type:'symbol',source:'ltt-vehicles',layout:{'text-field':['get','title'],'text-size':11,'text-offset':[0,1.4],'text-anchor':'top'},paint:{'text-color':'#10232d','text-halo-color':'#fff','text-halo-width':1.5}});
+      map3d.addSource('ltt-route',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+      map3d.addLayer({id:'ltt-route-line',type:'line',source:'ltt-route',paint:{'line-color':'#46d9ba','line-width':4,'line-opacity':.9}});
+      map3dSync();
+    });
+    map3d.on('error',event=>{if(event&&event.error)console.warn('LTT 3D map error:',event.error)});
+  }
+  map3dButton.addEventListener('click',async function(){
+    try {
+      if(!is3d) {
+        const center=map.getCenter();map3dContainer.hidden=false;map.getContainer().style.visibility='hidden';is3d=true;map3dButton.textContent='🗺️ Повернутися до 2D';
+        await initializeMap3d();
+        if(map3d){map3d.jumpTo({center:[center.lng,center.lat],zoom:Math.max(15,map.getZoom()),pitch:55,bearing:-18});setTimeout(()=>map3d.resize(),150);}
+      } else {
+        if(map3d){const center=map3d.getCenter();map.setView([center.lat,center.lng],Math.max(12,Math.min(18,map3d.getZoom())),{animate:false});}
+        map3dContainer.hidden=true;map.getContainer().style.visibility='';is3d=false;map3dButton.textContent='🏙️ 3D-карта Львова';setTimeout(()=>map.invalidateSize(),150);
+      }
+    } catch(error) {map3dContainer.hidden=true;map.getContainer().style.visibility='';is3d=false;map3dButton.textContent='🏙️ 3D-карта Львова';alert('Не вдалося завантажити 3D-карту. Перевір інтернет і спробуй ще раз.');}
+  });
+  setInterval(()=>{if(is3d)map3dSync()},3000);
+
+  // Transport Tycoon mini-game, separate from live map; saves only in this browser.
+  const game=document.createElement('div');game.id='lttTycoon';game.hidden=true;
+  game.innerHTML=`
+    <div class="ltt-tycoon-shell">
+      <div class="ltt-tycoon-top"><div><h2 class="ltt-tycoon-title">🎮 Транспортний магнат</h2><div class="ltt-tycoon-subtitle">Побудуй власну транспортну мережу Львова</div></div><button class="secondary" id="lttGameClose">✕ Закрити гру</button></div>
+      <div class="ltt-tycoon-stats">
+        <div class="ltt-tycoon-stat"><span>💰 Бюджет</span><strong id="lttGameMoney">10 000 ₴</strong></div>
+        <div class="ltt-tycoon-stat"><span>⭐ Рівень</span><strong id="lttGameLevel">1</strong></div>
+        <div class="ltt-tycoon-stat"><span>🚍 Транспорт</span><strong id="lttGameFleet">0</strong></div>
+        <div class="ltt-tycoon-stat"><span>📈 Дохід за цикл</span><strong id="lttGameIncome">0 ₴</strong></div>
+      </div>
+      <div class="ltt-tycoon-columns">
+        <div>
+          <section class="ltt-tycoon-panel"><h3>🏙️ Твоє місто</h3><div class="ltt-tycoon-city"><div class="ltt-tycoon-city-items" id="lttGameCityItems"></div></div><div class="ltt-tycoon-summary" id="lttGameSummary"></div></section>
+          <section class="ltt-tycoon-panel"><h3>🧾 Журнал міста</h3><div id="lttGameLog" class="ltt-tycoon-log">Ти став новим транспортним магнатом. Починай будівництво!</div><p class="ltt-tycoon-note">Прогрес автоматично зберігається в цьому браузері. Гра не змінює справжні GPS-маршрути.</p></section>
+        </div>
+        <div>
+          <section class="ltt-tycoon-panel"><h3>🚋 Магазин транспорту</h3><div class="ltt-tycoon-actions"><button id="lttBuyTram">🚋 Купити трамвай · 3 200 ₴</button><button id="lttBuyBus">🚌 Купити автобус · 2 400 ₴</button><button id="lttBuyTrolley">🚎 Купити тролейбус · 2 900 ₴</button></div></section>
+          <section class="ltt-tycoon-panel"><h3>🏗️ Будівництво</h3><div class="ltt-tycoon-actions"><button class="secondary" id="lttBuildStop">🚏 Зупинка · 1 200 ₴</button><button class="secondary" id="lttBuildDepot">🏢 Депо · 3 200 ₴</button><button class="secondary" id="lttBuildRoad">🛣️ Дорога · 600 ₴</button><button id="lttLaunchRoute">▶️ Відкрити маршрут</button></div><p class="ltt-tycoon-note">Для маршруту потрібні транспорт, 2 зупинки, депо та дорога. Після запуску маршруту надходитиме ігровий дохід.</p></section>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(game);
+  const saveKey='lvivTycoonSaveV1';
+  let state={money:10000,level:1,xp:0,vehicles:[],stops:0,depots:0,roads:0,routes:0,totalEarned:0};
+  try{const saved=JSON.parse(localStorage.getItem(saveKey)||'null');if(saved&&typeof saved==='object'){
+    state.money=Math.max(0,Number(saved.money)||0);state.level=Math.max(1,Number(saved.level)||1);state.xp=Math.max(0,Number(saved.xp)||0);
+    state.vehicles=Array.isArray(saved.vehicles)?saved.vehicles.filter(x=>['tram','bus','trolley'].includes(x)):[];
+    ['stops','depots','roads','routes','totalEarned'].forEach(k=>state[k]=Math.max(0,Number(saved[k])||0));
+  }}catch(error){}
+  let lastAction='Ти став новим транспортним магнатом. Починай будівництво!';
+  const money=value=>Math.round(value).toLocaleString('uk-UA')+' ₴';
+  function persist(){try{localStorage.setItem(saveKey,JSON.stringify(state))}catch(error){lastAction='Не вдалося зберегти гру: сховище браузера переповнене.'}}
+  function render(){
+    document.getElementById('lttGameMoney').textContent=money(state.money);
+    document.getElementById('lttGameLevel').textContent=state.level+' · '+state.xp+'/'+(state.level*250)+' XP';
+    document.getElementById('lttGameFleet').textContent=state.vehicles.length;
+    const income=state.routes*(25+state.stops*12+state.vehicles.length*18);document.getElementById('lttGameIncome').textContent=money(income);
+    const counts={tram:state.vehicles.filter(x=>x==='tram').length,bus:state.vehicles.filter(x=>x==='bus').length,trolley:state.vehicles.filter(x=>x==='trolley').length};
+    document.getElementById('lttGameCityItems').innerHTML='<div class="ltt-tycoon-city-item">🏠<small>Місто · рівень '+state.level+'</small></div><div class="ltt-tycoon-city-item">🚏<small>Зупинки · '+state.stops+'</small></div><div class="ltt-tycoon-city-item">🚋<small>Транспорт · '+state.vehicles.length+'</small></div><div class="ltt-tycoon-city-item">🏢<small>Депо · '+state.depots+'</small></div><div class="ltt-tycoon-city-item">🚋<small>Трамваї · '+counts.tram+'</small></div><div class="ltt-tycoon-city-item">🚌<small>Автобуси · '+counts.bus+'</small></div><div class="ltt-tycoon-city-item">🚎<small>Тролейбуси · '+counts.trolley+'</small></div><div class="ltt-tycoon-city-item">🛣️<small>Дороги · '+state.roads+'</small></div>';
+    document.getElementById('lttGameSummary').textContent='Відкриті маршрути: '+state.routes+' · Зароблено за весь час: '+money(state.totalEarned);
+    document.getElementById('lttGameLog').textContent=lastAction;
+    document.getElementById('lttLaunchRoute').disabled=!(state.vehicles.length>0&&state.stops>=2&&state.depots>=1&&state.roads>=1);
+  }
+  function spend(cost,description,action){
+    if(state.money<cost){lastAction='Не вистачає грошей для покупки. Заробляй на відкритих маршрутах!';render();return;}
+    state.money-=cost;action();lastAction=description;persist();render();
+  }
+  function buy(type,cost,label){spend(cost,'Куплено: '+label,()=>{state.vehicles.push(type);state.xp+=35;});}
+  document.getElementById('lttBuyTram').addEventListener('click',()=>buy('tram',3200,'трамвай 🚋'));
+  document.getElementById('lttBuyBus').addEventListener('click',()=>buy('bus',2400,'автобус 🚌'));
+  document.getElementById('lttBuyTrolley').addEventListener('click',()=>buy('trolley',2900,'тролейбус 🚎'));
+  document.getElementById('lttBuildStop').addEventListener('click',()=>spend(1200,'Побудовано нову зупинку 🚏',()=>{state.stops++;state.xp+=20;}));
+  document.getElementById('lttBuildDepot').addEventListener('click',()=>spend(3200,'Відкрито нове депо 🏢',()=>{state.depots++;state.xp+=45;}));
+  document.getElementById('lttBuildRoad').addEventListener('click',()=>spend(600,'Додано нову дорогу 🛣️',()=>{state.roads++;state.xp+=10;}));
+  document.getElementById('lttLaunchRoute').addEventListener('click',()=>{
+    if(!(state.vehicles.length>0&&state.stops>=2&&state.depots>=1&&state.roads>=1)){lastAction='Потрібні транспорт, 2 зупинки, депо та дорога.';render();return;}
+    state.routes++;state.xp+=100;lastAction='Новий маршрут відкрито! Пасажири почали ним користуватися. 🎉';persist();render();
+  });
+  function gameTick(){
+    const income=state.routes*(25+state.stops*12+state.vehicles.length*18);if(income<=0)return;
+    state.money+=income;state.totalEarned+=income;state.xp+=Math.max(1,Math.round(income/8));let leveled=false;
+    while(state.xp>=state.level*250){state.xp-=state.level*250;state.level++;leveled=true;}
+    lastAction=leveled?'Новий рівень! Твоє місто стало більшим. ⭐':'Пасажири скористалися транспортом. Дохід: '+money(income);persist();render();
+  }
+  gameButton.addEventListener('click',()=>{game.hidden=false;render();});
+  document.getElementById('lttGameClose').addEventListener('click',()=>{game.hidden=true;persist();});
+  game.addEventListener('click',event=>{if(event.target===game)game.hidden=true;});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!game.hidden)game.hidden=true;});
+  setInterval(gameTick,20000);persist();render();
+})();
+
+</script>
 </body>
 </html>
