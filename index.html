@@ -20,6 +20,10 @@ button.secondary,.mode-btn{background:#263b46;color:white;border:1px solid #3c56
 #vehicleList{display:grid;gap:7px;margin-top:12px}.tram-row{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:10px;background:#14232d;border:1px solid #2b3d47;font-size:11px}.tram-row strong{color:#eaf6f3}.tram-row span{color:var(--muted);text-align:right}#message,#stopInfo,#gpsMessage,#routeMessage{font-size:11px;color:var(--muted);line-height:1.5;min-height:20px}.small{font-size:10px;color:#8093a1;line-height:1.5}
 .route-actions{display:flex;align-items:center;gap:8px}.route-actions button{flex:1}.route-line-legend{font-size:10px;color:var(--muted);line-height:1.6;margin-top:8px}.arrival-list{display:grid;gap:7px;margin-top:10px}.arrival-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 9px;border:1px solid #344650;background:#192934;border-radius:9px}.arrival-route{font-weight:800;font-size:12px}.arrival-time{text-align:right;font-weight:800;color:#69dfbd;font-size:12px}.arrival-source{display:block;font-size:9px;color:#a9bac5;font-weight:400;margin-top:3px}
 #nearbyStopsList{display:grid;gap:7px}.nearby-empty{font-size:11px;color:var(--muted);line-height:1.5}.nearby-distance{white-space:nowrap;font-weight:700;color:#69dfbd!important}
+#routeSearchInput{width:100%;padding:11px 12px;border-radius:10px;background:#14232d;color:#edf5f8;border:1px solid #3c5662;font-size:12px;outline:none}#routeSearchInput:focus{border-color:#55d6b4;box-shadow:0 0 0 2px #55d6b422}.route-option-list{display:grid;gap:7px;margin-top:10px}.route-option{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;background:#14232d;border:1px solid #2b3d47;cursor:pointer;font-size:11px}.route-option:hover{border-color:#55d6b4}.route-option-main{min-width:0;display:grid;gap:3px}.route-option-main strong{color:#edf5f8}.route-option-main span{color:var(--muted);font-size:10px;overflow:hidden;text-overflow:ellipsis}.route-star{width:35px;min-width:35px;padding:7px 4px;margin:0;background:#263b46;color:#f5d36b;border:1px solid #3c5662;font-size:16px}.route-star.active{background:#4a3d1f;border-color:#a98736}.filter-active{background:#285448!important;border-color:#55d6b4!important;color:#eafff8!important}
+.map-tools{position:absolute;z-index:500;right:15px;top:60px}.map-tools button{width:auto;min-width:132px;margin:0;padding:10px 12px;box-shadow:0 5px 18px #0005}.map-wrap:fullscreen{width:100vw;height:100vh;background:#111}.map-wrap:fullscreen #map{height:100vh;min-height:100vh}.map-wrap:fullscreen .map-tools{top:60px}
+body.light-theme #routeSearchInput{background:#fff;color:#172832;border-color:#cbd9df}body.light-theme .route-option{background:#e8eff2;border-color:#cbd9df}body.light-theme .route-option-main strong{color:#172832}body.light-theme .route-star{background:#dbe6ea;color:#806000;border-color:#cbd9df}body.light-theme .route-star.active{background:#f8e9b9}
+.map-wrap.map-fullscreen-fallback{position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;background:#111}.map-wrap.map-fullscreen-fallback #map{height:100vh;min-height:100vh}
 .map-wrap{position:relative;min-width:0}#map{height:100%;min-height:400px;background:#1b2932}.map-label,.map-state{position:absolute;z-index:450;top:15px;background:#101c25ed;border:1px solid #ffffff18;padding:11px 15px;border-radius:12px;font-size:12px;font-weight:700;box-shadow:0 6px 20px #0004;pointer-events:none}.map-label{left:15px}.map-state{right:15px;color:#c4d3dc;font-size:11px;font-weight:500}
 .user-dot{width:18px;height:18px;border:3px solid white;border-radius:50%;background:#35cba7;box-shadow:0 0 0 7px #35cba744}.vehicle-div-icon{background:transparent;border:0}.vehicle-pin{display:flex;align-items:center;gap:4px;width:max-content;max-width:110px;padding:5px 7px;border-radius:10px;background:#12232def;border:2px solid var(--route-color,#55d6b4);box-shadow:0 3px 12px #0008;color:white;white-space:nowrap}.vehicle-symbol{font-size:15px;line-height:1}.vehicle-route{font-size:10px;font-weight:900;color:white}.stop-dot{width:12px;height:12px;border:2px solid white;border-radius:50%;background:#5599ef;box-shadow:0 1px 7px #0008}.nearby-stop-dot{width:14px;height:14px;border:2px solid white;border-radius:50%;background:#f0b95b;box-shadow:0 1px 8px #000a}
 .leaflet-control-zoom a{color:#eaf2f6!important;background:#14212b!important;border-color:#ffffff20!important}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#13212b;color:#edf4f8}.leaflet-popup-content{font-size:12px;line-height:1.55}.leaflet-popup-content strong{color:#72dfc2}.leaflet-tooltip{background:#12232d;color:#edf5f8;border:1px solid #435761}.leaflet-tooltip:before{border-top-color:#435761}
@@ -35,16 +39,18 @@ body.light-theme .sidebar{border-right-color:#d4e0e5}body.light-theme .card{back
 <aside class="sidebar">
   <header class="brand"><div class="brand-icon">🚋</div><div><h1>LVIV TRANSPORT TRACKER</h1><div class="subtitle">Рух транспорту Львова в реальному часі</div></div></header>
   <section class="card"><h2>Вибери транспорт</h2><div class="mode-switch"><button class="mode-btn active" id="tramModeBtn" type="button">🚋 Трамваї</button><button class="mode-btn" id="busModeBtn" type="button">🚌 Автобуси</button></div></section>
+  <section class="card"><h2>🔎 Пошук маршруту</h2><input id="routeSearchInput" type="search" autocomplete="off" placeholder="Введи номер маршруту…" aria-label="Пошук маршруту"><div id="routeSearchResults" class="route-option-list"><div class="nearby-empty">Завантажуємо маршрути міста…</div></div></section>
+  <section class="card"><h2>⭐ Обрані маршрути</h2><div id="favoriteRoutes" class="route-option-list"><div class="nearby-empty">Натисни на зірочку біля маршруту, щоб зберегти його тут.</div></div></section>
   <div class="status"><i class="status-dot" id="gpsDot"></i><div><strong id="gpsTitle">Підключаємо GPS…</strong><span id="gpsDetail">Отримуємо список маршрутів міста.</span></div></div>
   <section class="card"><h2 id="vehicleHeading">🚋 Трамваї на маршрутах</h2><div class="count-row"><span class="count" id="vehicleCount">—</span><span class="count-caption">позицій із GPS</span></div><p class="detail" id="gpsMessage">Завантаження даних…</p><button id="refreshBtn" class="secondary">Оновити GPS зараз</button><div id="vehicleList"></div><p class="small" id="updatedAt">Час оновлення ще невідомий.</p></section>
-  <section class="card" id="routeCard"><h2 id="selectedRouteTitle">🗺️ Лінія маршруту</h2><p id="routeMessage">Натисни на трамвай або автобус на карті чи у списку, щоб побачити його маршрут.</p><div class="route-line-legend" id="routeLegend" hidden>Суцільна лінія — напрямок 1. Пунктир — зворотний напрямок. Натисни на позначку зупинки, щоб побачити прибуття.</div><button class="secondary" id="clearRouteBtn" type="button" hidden>Приховати лінію маршруту</button></section>
+  <section class="card" id="routeCard"><h2 id="selectedRouteTitle">🗺️ Лінія маршруту</h2><p id="routeMessage">Натисни на трамвай або автобус на карті чи у списку, щоб побачити його маршрут.</p><div class="route-line-legend" id="routeLegend" hidden>Суцільна лінія — напрямок 1. Пунктир — зворотний напрямок. Натисни на позначку зупинки, щоб побачити прибуття.</div><button class="secondary" id="filterRouteBtn" type="button" disabled>Показувати тільки цей маршрут</button><button class="secondary" id="clearRouteBtn" type="button" hidden>Приховати лінію маршруту</button></section>
   <section class="card"><h2>📍 Моє місце</h2><button id="locateBtn">Показати мене на карті</button><p id="message">Натисни кнопку, щоб показати своє місце та найближчі зупинки в радіусі 10 км.</p></section>
   <section class="card"><h2>🚏 Найближчі зупинки — до 10 км</h2><div id="nearbyStopsList"><div class="nearby-empty">Зупинки з’являться тут після натискання «Показати мене на карті».</div></div></section>
   <section class="card"><h2>🚏 Усі зупинки на карті</h2><button class="secondary" id="stopsBtn">Завантажити зупинки</button><p id="stopInfo">Зупинки ще не завантажені.</p></section>
   <section class="card"><h2>⚙️ Налаштування</h2><label for="refreshRate" class="detail">Частота оновлення GPS</label><select id="refreshRate" style="width:100%;padding:10px;border-radius:9px;background:#14232d;color:#edf5f8;border:1px solid #3c5662"><option value="30">Кожні 30 секунд</option><option value="60">Кожні 60 секунд</option><option value="90">Кожні 90 секунд</option></select><button class="secondary" id="themeBtn" type="button">☀️ Увімкнути світлу тему</button><p class="small" id="settingsMessage">Налаштування застосовуються одразу.</p></section>
   <div class="footer">GPS і прогнози прибуття: відкриті GTFS-Realtime-дані через <a href="https://lad.lviv.ua/terms" target="_blank" rel="noreferrer">API Транспорту Львова</a> · <a href="https://data.gov.ua/dataset/lviv-public-transport-gtfs-real-time" target="_blank" rel="noreferrer">джерело даних</a> · CC BY 4.0.<br>Карта: © OpenStreetMap contributors. Час прибуття може змінюватися.</div>
 </aside>
-<main class="map-wrap"><div id="map"></div><div class="map-label">🗺️ Львів, Україна</div><div class="map-state" id="mapState">🚋 Режим трамваїв</div></main>
+<main class="map-wrap" id="mapWrap"><div id="map"></div><div class="map-label">🗺️ Львів, Україна</div><div class="map-state" id="mapState">🚋 Режим трамваїв</div><div class="map-tools"><button class="secondary" id="fullscreenBtn" type="button">⛶ На весь екран</button></div></main>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -75,6 +81,11 @@ let routeRequestToken=0;
 let lastKnownLocation=null;
 let refreshTimer=null;
 let nearbyRequestToken=0;
+let selectedRouteShortName=null;
+let onlySelectedRoute=false;
+const FAVORITES_STORAGE_KEY='lvivTransportFavoritesV1';
+let favoriteRouteKeys=new Set();
+try{const savedFavorites=JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY)||'[]');favoriteRouteKeys=new Set(Array.isArray(savedFavorites)?savedFavorites:[])}catch(error){favoriteRouteKeys=new Set()}
 
 const gpsDot=document.getElementById('gpsDot');
 const gpsTitle=document.getElementById('gpsTitle');
@@ -97,6 +108,12 @@ const nearbyStopsList=document.getElementById('nearbyStopsList');
 const locateBtn=document.getElementById('locateBtn');
 const refreshRate=document.getElementById('refreshRate');
 const themeBtn=document.getElementById('themeBtn');
+const routeSearchInput=document.getElementById('routeSearchInput');
+const routeSearchResults=document.getElementById('routeSearchResults');
+const favoriteRoutes=document.getElementById('favoriteRoutes');
+const filterRouteBtn=document.getElementById('filterRouteBtn');
+const mapWrap=document.getElementById('mapWrap');
+const fullscreenBtn=document.getElementById('fullscreenBtn');
 
 function safeColor(value){return /^#[0-9a-f]{6}$/i.test(String(value||''))?value:'#55d6b4'}
 function displayRouteNumber(routeName){
@@ -108,6 +125,62 @@ function displayRouteNumber(routeName){
   return name;
 }
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
+function routeKey(route){return route.type+'|'+route.short_name}
+function saveFavorites(){try{localStorage.setItem(FAVORITES_STORAGE_KEY,JSON.stringify(Array.from(favoriteRouteKeys)))}catch(error){}}
+function setFavorite(route,enabled){const key=routeKey(route);if(enabled)favoriteRouteKeys.add(key);else favoriteRouteKeys.delete(key);saveFavorites();renderFavoriteRoutes();if(routeSearchInput.value.trim())renderRouteSearch()}
+function chooseRoute(route){
+  if(route.type!==currentMode)switchMode(route.type);
+  selectedRouteShortName=route.short_name;
+  showRoute(route.short_name);
+  routeMessage.textContent='Вибрано маршрут № '+displayRouteNumber(route.short_name)+'. Завантажуємо його лінію та зупинки…';
+  updateRouteFilterButton();
+}
+function createRouteOption(route,showStar){
+  const row=document.createElement('div');row.className='route-option';
+  const main=document.createElement('div');main.className='route-option-main';
+  const title=document.createElement('strong');title.textContent=(route.type==='bus'?'🚌 Автобус № ':'🚋 Трамвай № ')+displayRouteNumber(route.short_name);
+  const subtitle=document.createElement('span');subtitle.textContent=route.long_name||'Міський маршрут';
+  main.append(title,subtitle);row.appendChild(main);
+  if(showStar){const star=document.createElement('button');star.type='button';star.className='route-star'+(favoriteRouteKeys.has(routeKey(route))?' active':'');star.textContent=favoriteRouteKeys.has(routeKey(route))?'★':'☆';star.title=favoriteRouteKeys.has(routeKey(route))?'Прибрати з обраного':'Додати в обране';star.setAttribute('aria-label',star.title);star.addEventListener('click',function(event){event.stopPropagation();setFavorite(route,!favoriteRouteKeys.has(routeKey(route)))});row.appendChild(star)}
+  row.addEventListener('click',function(){chooseRoute(route)});
+  return row;
+}
+function renderRouteSearch(){
+  if(!routeSearchInput||!routeSearchResults)return;
+  const query=routeSearchInput.value.trim().toLocaleLowerCase();
+  if(!allRoutes.length){routeSearchResults.textContent='Завантажуємо маршрути…';return}
+  if(!query){routeSearchResults.textContent='Введи номер маршруту, наприклад 1 або 8.';return}
+  const matches=allRoutes.filter(function(route){
+    if(route.type!==currentMode)return false;
+    return displayRouteNumber(route.short_name).toLocaleLowerCase().includes(query)||String(route.short_name).toLocaleLowerCase().includes(query)||String(route.long_name||'').toLocaleLowerCase().includes(query);
+  }).sort(function(a,b){return displayRouteNumber(a.short_name).localeCompare(displayRouteNumber(b.short_name),'uk',{numeric:true})}).slice(0,8);
+  routeSearchResults.replaceChildren();
+  if(!matches.length){routeSearchResults.textContent='Маршрут не знайдено. Перевір номер або вибери інший вид транспорту.';return}
+  matches.forEach(function(route){routeSearchResults.appendChild(createRouteOption(route,true))});
+}
+function renderFavoriteRoutes(){
+  if(!favoriteRoutes)return;
+  favoriteRoutes.replaceChildren();
+  const favorites=allRoutes.filter(function(route){return favoriteRouteKeys.has(routeKey(route))}).sort(function(a,b){return (a.type+a.short_name).localeCompare(b.type+b.short_name,'uk',{numeric:true})});
+  if(!favorites.length){favoriteRoutes.textContent='Натисни на зірочку біля маршруту, щоб зберегти його тут.';return}
+  favorites.forEach(function(route){favoriteRoutes.appendChild(createRouteOption(route,true))});
+}
+function updateRouteFilterButton(){
+  filterRouteBtn.disabled=!selectedRouteShortName;
+  filterRouteBtn.classList.toggle('filter-active',onlySelectedRoute);
+  filterRouteBtn.textContent=onlySelectedRoute?'Показувати всі маршрути':'Показувати тільки цей маршрут';
+}
+function applyVehicleFilter(){
+  vehicleMarkers.forEach(function(entry){
+    const visible=!onlySelectedRoute||!selectedRouteShortName||entry.routeName===selectedRouteShortName;
+    if(visible&&!map.hasLayer(entry.marker))entry.marker.addTo(map);
+    else if(!visible&&map.hasLayer(entry.marker))map.removeLayer(entry.marker);
+  });
+  vehicleList.querySelectorAll('.tram-row[data-route-name]').forEach(function(row){
+    row.hidden=onlySelectedRoute&&!!selectedRouteShortName&&row.dataset.routeName!==selectedRouteShortName;
+  });
+  updateRouteFilterButton();
+}
 function makeVehicleIcon(route){
   const symbol=currentMode==='bus'?'🚌':'🚋';
   return L.divIcon({className:'vehicle-div-icon',html:'<div class="vehicle-pin" style="--route-color:'+safeColor(route.color)+'"><span class="vehicle-symbol">'+symbol+'</span><span class="vehicle-route">'+escapeHtml(displayRouteNumber(route.short_name||'Маршрут'))+'</span></div>',iconSize:[90,34],iconAnchor:[45,17]});
@@ -148,6 +221,9 @@ function animateMarkersFrame(now){
 
 function clearSelectedRoute(){
   routeRequestToken++;
+  selectedRouteShortName=null;
+  onlySelectedRoute=false;
+  applyVehicleFilter();
   selectedRouteLayers.forEach(function(layer){map.removeLayer(layer)});
   selectedStopMarkers.forEach(function(marker){map.removeLayer(marker)});
   selectedRouteLayers=[];selectedStopMarkers=[];
@@ -157,6 +233,8 @@ function clearSelectedRoute(){
   clearRouteBtn.hidden=true;
 }
 clearRouteBtn.addEventListener('click',clearSelectedRoute);
+filterRouteBtn.addEventListener('click',function(){if(!selectedRouteShortName)return;onlySelectedRoute=!onlySelectedRoute;applyVehicleFilter()});
+routeSearchInput.addEventListener('input',renderRouteSearch);
 
 async function loadRouteStatic(routeName){
   if(routeStaticCache.has(routeName))return routeStaticCache.get(routeName);
@@ -212,6 +290,8 @@ async function loadStopArrivals(stop,marker){
 }
 
 async function showRoute(routeName){
+  selectedRouteShortName=routeName;
+  applyVehicleFilter();
   const requestToken=++routeRequestToken;
   selectedRouteLayers.forEach(function(layer){map.removeLayer(layer)});
   selectedStopMarkers.forEach(function(marker){map.removeLayer(marker)});
@@ -266,6 +346,8 @@ async function loadRoutes(){
   if(!Array.isArray(routes))throw new Error('API повернув неочікуваний список маршрутів');
   allRoutes=routes.filter(function(route){return(route.type==='tram'||route.type==='bus')&&(route.short_name||route.route_short_name)}).map(function(route){return{short_name:route.short_name||route.route_short_name,long_name:route.long_name||route.route_long_name||'',type:route.type,color:safeColor(route.color)}});
   if(!allRoutes.length)throw new Error('API не повернув маршрути громадського транспорту');
+  renderRouteSearch();
+  renderFavoriteRoutes();
 }
 function updateModeControls(){
   const isBus=currentMode==='bus';
@@ -278,6 +360,8 @@ function updateModeControls(){
 function switchMode(mode){
   if(mode===currentMode)return;
   currentMode=mode;routeCursor=0;clearSelectedRoute();
+  renderRouteSearch();
+  renderFavoriteRoutes();
   vehicleMarkers.forEach(function(entry){map.removeLayer(entry.marker)});vehicleMarkers.clear();
   vehicleCount.textContent='—';vehicleList.replaceChildren();updatedAt.textContent='Завантажуємо GPS нового режиму…';
   gpsDot.className='status-dot';gpsTitle.textContent=mode==='bus'?'Підключаємо GPS автобусів…':'Підключаємо GPS трамваїв…';
@@ -299,8 +383,12 @@ async function refreshVehicles(){
     const routes=allRoutes.filter(function(route){return route.type===modeAtStart});
     if(!routes.length)throw new Error(modeAtStart==='bus'?'У списку API не знайдено автобусних маршрутів':'У списку API не знайдено трамвайних маршрутів');
     const batchLength=Math.min(REQUEST_BATCH_SIZE,routes.length);
-    const batch=Array.from({length:batchLength},function(_,index){return routes[(routeCursor+index)%routes.length]});
+    let batch=Array.from({length:batchLength},function(_,index){return routes[(routeCursor+index)%routes.length]});
     routeCursor=(routeCursor+batchLength)%routes.length;
+    if(onlySelectedRoute&&selectedRouteShortName){
+      const selected=routes.find(function(route){return route.short_name===selectedRouteShortName});
+      if(selected&&!batch.some(function(route){return route.short_name===selected.short_name}))batch[batch.length-1]=selected;
+    }
     const results=await Promise.allSettled(batch.map(async function(route){
       const response=await fetch(API+'/routes/dynamic/'+encodeURIComponent(route.short_name),{cache:'no-store'});
       if(!response.ok)throw new Error(route.short_name+': HTTP '+response.status);
@@ -319,8 +407,9 @@ async function refreshVehicles(){
         const key=modeAtStart+'::'+route.short_name+'::'+String(vehicle.id);seenVehicles.add(key);freshCount++;
         let entry=vehicleMarkers.get(key);
         if(!entry){
-          const marker=L.marker([lat,lng],{icon:makeVehicleIcon(route),title:(modeAtStart==='bus'?'Автобус ':'Трамвай ')+displayRouteNumber(route.short_name)}).addTo(map);
+          const marker=L.marker([lat,lng],{icon:makeVehicleIcon(route),title:(modeAtStart==='bus'?'Автобус ':'Трамвай ')+displayRouteNumber(route.short_name)});
           entry={marker:marker,routeName:route.short_name,animation:null};vehicleMarkers.set(key,entry);
+          applyVehicleFilter();
           marker.on('click',function(){showRoute(route.short_name)});
         }else moveMarkerSmoothly(entry,lat,lng);
         entry.marker.setPopupContent(makeVehiclePopup(route,vehicle));
@@ -330,10 +419,10 @@ async function refreshVehicles(){
     vehicleCount.textContent=String(vehicleMarkers.size);
     updatedAt.textContent='Оновлено: '+new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' · опрацьовано '+successfulRoutes.size+' із '+routes.length+' маршрутів';
     vehicleList.replaceChildren();
-    const rows=[];vehicleMarkers.forEach(function(entry){rows.push({routeName:displayRouteNumber(entry.routeName),rawRouteName:entry.routeName,marker:entry.marker})});
+    const rows=[];vehicleMarkers.forEach(function(entry){if(!onlySelectedRoute||!selectedRouteShortName||entry.routeName===selectedRouteShortName)rows.push({routeName:displayRouteNumber(entry.routeName),rawRouteName:entry.routeName,marker:entry.marker})});
     rows.sort(function(a,b){return a.routeName.localeCompare(b.routeName,'uk',{numeric:true})});
     rows.slice(0,12).forEach(function(item){
-      const row=document.createElement('div');row.className='tram-row';
+      const row=document.createElement('div');row.className='tram-row';row.dataset.routeName=item.rawRouteName;
       const route=document.createElement('strong');route.textContent=(modeAtStart==='bus'?'🚌 ':'🚋 ')+item.routeName;
       const pos=item.marker.getLatLng();const coords=document.createElement('span');coords.textContent=pos.lat.toFixed(4)+', '+pos.lng.toFixed(4);
       row.append(route,coords);row.style.cursor='pointer';
@@ -363,10 +452,20 @@ async function refreshVehicles(){
 }
 refreshBtn.addEventListener('click',function(){if(Date.now()-lastRefreshAt<12000){gpsMessage.textContent='Зачекай кілька секунд перед наступним оновленням.';return}refreshVehicles()});
 updateModeControls();refreshVehicles();
+routeSearchInput.addEventListener('focus',function(){if(!allRoutes.length)loadRoutes().then(function(){renderRouteSearch();renderFavoriteRoutes()}).catch(function(){routeSearchResults.textContent='Не вдалося завантажити маршрути. Спробуй пізніше.'})});
+renderRouteSearch();renderFavoriteRoutes();
 function restartRefreshTimer(){if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(refreshVehicles,refreshIntervalMs)}
 restartRefreshTimer();
 refreshRate.addEventListener('change',function(){refreshIntervalMs=Number(refreshRate.value)*1000;restartRefreshTimer();document.getElementById('settingsMessage').textContent='GPS буде оновлюватися кожні '+refreshRate.value+' секунд.'});
 themeBtn.addEventListener('click',function(){document.body.classList.toggle('light-theme');const light=document.body.classList.contains('light-theme');themeBtn.textContent=light?'🌙 Увімкнути темну тему':'☀️ Увімкнути світлу тему';document.getElementById('settingsMessage').textContent=light?'Світлу тему увімкнено.':'Темну тему увімкнено.'});
+fullscreenBtn.addEventListener('click',async function(){
+  try{
+    if(document.fullscreenElement){await document.exitFullscreen()}
+    else if(mapWrap.requestFullscreen){await mapWrap.requestFullscreen()}
+    else{mapWrap.classList.toggle('map-fullscreen-fallback');fullscreenBtn.textContent=mapWrap.classList.contains('map-fullscreen-fallback')?'Згорнути карту':'⛶ На весь екран';setTimeout(function(){map.invalidateSize()},200)}
+  }catch(error){fullscreenBtn.textContent='Повний екран недоступний у цьому браузері'}
+});
+document.addEventListener('fullscreenchange',function(){const active=document.fullscreenElement===mapWrap;fullscreenBtn.textContent=active?'Згорнути карту':'⛶ На весь екран';setTimeout(function(){map.invalidateSize()},180)});
 
 function distanceMeters(a,b){
   const rad=function(value){return value*Math.PI/180};
