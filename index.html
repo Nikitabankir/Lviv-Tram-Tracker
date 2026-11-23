@@ -1212,6 +1212,16 @@ stopsBtn.addEventListener('click',async function(){
     .ltt-tycoon-summary{font-size:11px;color:#d1e1e6;line-height:1.7;margin-top:9px}.ltt-tycoon-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
     .ltt-tycoon-actions button{margin:0;padding:11px 8px;font-size:11px;background:#6ce0bc}.ltt-tycoon-actions button.secondary{background:#294956;color:#f1f8fa;border:1px solid #52717d}
     .ltt-tycoon-note{font-size:10px;line-height:1.5;color:#c0d1d7;margin-top:10px}.ltt-tycoon-log{font-size:11px;line-height:1.7;color:#d6e7ec;min-height:22px}
+    .ltt-tutorial{padding:15px;margin:0 0 14px;border:1px solid #62bea8;border-radius:16px;background:linear-gradient(125deg,#163d42,#1b303d);box-shadow:0 8px 24px #071a2440}
+    .ltt-tutorial-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .ltt-tutorial-head h3{margin:0;font-size:15px;color:#eafff9}
+    .ltt-tutorial-step{font-size:10px;font-weight:900;color:#9cebd3;background:#234d50;padding:5px 9px;border-radius:999px}
+    .ltt-tutorial-text{font-size:12px;line-height:1.6;color:#d2e6e7;margin:9px 0}
+    .ltt-tutorial-track{height:7px;border-radius:99px;background:#102832;overflow:hidden}
+    .ltt-tutorial-track>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#5bd4b4,#b7f18b);transition:width .2s}
+    .ltt-tutorial-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:11px}
+    .ltt-tutorial-actions button{width:auto;margin:0}
+    #lttTycoon button:disabled{opacity:.42!important;filter:grayscale(.35);cursor:not-allowed!important}
     .ltt-tycoon-aid{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 15px;margin:12px 0 15px;border:1px solid #8b7850;border-radius:15px;background:linear-gradient(115deg,#4b4026,#263b3c)}
     .ltt-tycoon-aid strong{display:block;font-size:13px}.ltt-tycoon-aid p{margin:4px 0 0;font-size:10px;color:#e3d8bd}.ltt-tycoon-aid button{width:auto;margin:0;min-width:150px}.ltt-tycoon-aid button:disabled{opacity:.58;cursor:not-allowed}
     .ltt-collection-panel{margin-top:2px}.ltt-collection-progress{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#203b46;color:#d8e9ec;font-size:11px}
@@ -1413,6 +1423,12 @@ stopsBtn.addEventListener('click',async function(){
         <div class="ltt-tycoon-stat"><span>🚍 Транспорт</span><strong id="lttGameFleet">0</strong></div>
         <div class="ltt-tycoon-stat"><span>📈 Дохід за цикл</span><strong id="lttGameIncome">0 ₴</strong></div>
       </div>
+      <section class="ltt-tutorial" id="lttTutorial">
+        <div class="ltt-tutorial-head"><h3>🎓 Навчання транспортного магната</h3><span class="ltt-tutorial-step" id="lttTutorialStep">Перед грою</span></div>
+        <p class="ltt-tutorial-text" id="lttTutorialText">Спочатку пройди коротке навчання. Гра підказуватиме наступну дію та тимчасово заблокує інші кнопки, щоб ти випадково не витратив бюджет. Твій уже куплений транспорт і побудовані об'єкти зарахуються.</p>
+        <div class="ltt-tutorial-track"><span id="lttTutorialBar"></span></div>
+        <div class="ltt-tutorial-actions"><button id="lttTutorialStart">🎓 Почати навчання</button><button class="secondary" id="lttTutorialSell" hidden>♻️ Продати зайвий транспорт</button></div>
+      </section>
       <div class="ltt-tycoon-columns">
         <div>
           <section class="ltt-tycoon-panel"><h3>🏙️ Твоє місто</h3><div class="ltt-tycoon-city"><div class="ltt-tycoon-city-items" id="lttGameCityItems"></div></div><div class="ltt-tycoon-summary" id="lttGameSummary"></div></section>
@@ -1439,16 +1455,83 @@ stopsBtn.addEventListener('click',async function(){
     {id:'bus_tourist',type:'bus',name:'Туристичний автобус',icon:'🌟',rarity:'Легендарна',rarityClass:'legendary',price:6200,description:'Рідкісна модель для особливих рейсів.'}
   ];
   const validCollectionIds=new Set(collectionItems.map(item=>item.id));
-  let state={money:10000,level:1,xp:0,vehicles:[],stops:0,depots:0,roads:0,routes:0,totalEarned:0,collection:[],starterAidClaimed:false};
+  let state={money:10000,level:1,xp:0,vehicles:[],stops:0,depots:0,roads:0,routes:0,totalEarned:0,collection:[],starterAidClaimed:false,tutorialStarted:false};
   try{const saved=JSON.parse(localStorage.getItem(saveKey)||'null');if(saved&&typeof saved==='object'){
     state.money=Math.max(0,Number(saved.money)||0);state.level=Math.max(1,Number(saved.level)||1);state.xp=Math.max(0,Number(saved.xp)||0);
     state.vehicles=Array.isArray(saved.vehicles)?saved.vehicles.filter(x=>['tram','bus','trolley'].includes(x)):[];
     ['stops','depots','roads','routes','totalEarned'].forEach(k=>state[k]=Math.max(0,Number(saved[k])||0));
     state.collection=Array.isArray(saved.collection)?Array.from(new Set(saved.collection.filter(id=>validCollectionIds.has(id)))):[];
     state.starterAidClaimed=saved.starterAidClaimed===true;
+    state.tutorialStarted=saved.tutorialStarted===true;
   }}catch(error){}
   let lastAction='Ти став новим транспортним магнатом. Починай будівництво!';
   const money=value=>Math.round(value).toLocaleString('uk-UA')+' ₴';
+  function tutorialStep(){
+    if(state.routes>0)return 'done';
+    if(!state.tutorialStarted)return 'intro';
+    if(!state.starterAidClaimed)return 'aid';
+    if(state.vehicles.length<1)return 'vehicle';
+    if(state.stops<2)return 'stops';
+    if(state.depots<1)return 'depot';
+    if(state.roads<1)return 'road';
+    return 'route';
+  }
+  function tutorialAllows(action){
+    const step=tutorialStep();
+    return step==='done'||step===action;
+  }
+  function vehicleRefund(type){const prices={tram:3200,bus:2400,trolley:2900};return Math.round((prices[type]||0)*0.85);}
+  function renderTutorial(){
+    const step=tutorialStep();
+    const text=document.getElementById('lttTutorialText');
+    const badge=document.getElementById('lttTutorialStep');
+    const bar=document.getElementById('lttTutorialBar');
+    const start=document.getElementById('lttTutorialStart');
+    const steps=[
+      {done:state.starterAidClaimed},
+      {done:state.vehicles.length>0},
+      {done:state.stops>=2},
+      {done:state.depots>=1},
+      {done:state.roads>=1},
+      {done:state.routes>0}
+    ];
+    const current=steps.findIndex(item=>!item.done);
+    const progress=current<0?6:current;
+    const messages={
+      intro:'Спочатку пройди коротке навчання. Гра підказуватиме наступну дію та тимчасово заблокує інші кнопки, щоб ти випадково не витратив бюджет. Твій уже куплений транспорт і побудовані об’єкти зарахуються.',
+      aid:'Крок 1: забери безкоштовну стартову допомогу — 600 ₴. Її можна отримати лише один раз, повертати не потрібно. Натисни кнопку «Отримати 600 ₴».',
+      vehicle:'Крок 2: купи хоча б один трамвай, автобус або тролейбус. Якщо транспорт уже є, цей етап пропускається автоматично.',
+      stops:'Крок 3: побудуй дві зупинки. Натисни «Зупинка» двічі. Зараз у тебе '+state.stops+' із 2 зупинок. Транспорту вже є: '+state.vehicles.length+' — купувати ще не потрібно.'+(state.money<1200&&state.vehicles.length>1?' Грошей не вистачає? Можеш продати один зайвий транспорт за 85% ціни.':''),
+      depot:'Крок 4: чудово! Тепер побудуй одне депо за 3 200 ₴. Натисни кнопку «Депо». Якщо бюджету не вистачає, продай один зайвий транспорт за 85% ціни.',
+      road:'Крок 5: залишився дорожній етап — побудуй хоча б одну дорогу за 600 ₴. Якщо коштів мало, можна продати зайвий транспорт за 85% ціни.',
+      route:'Крок 6: усе готово! У тебе є транспорт, дві зупинки, депо та дорога. Натисни «Відкрити маршрут», щоб завершити навчання.',
+      done:'🎉 Навчання завершено! Тепер усі кнопки магазину, будівництва та колекції доступні. Можеш розвивати місто на власний розсуд.'
+    };
+    if(text)text.textContent=messages[step];
+    if(badge)badge.textContent=step==='intro'?'Перед грою':step==='done'?'Навчання завершено':'Крок '+(current+1)+' із 6';
+    if(bar)bar.style.width=(progress/6*100)+'%';
+    if(start)start.hidden=step!=='intro';
+    const sell=document.getElementById('lttTutorialSell');
+    const requiredCost=step==='stops'?1200:step==='depot'?3200:step==='road'?600:Infinity;
+    if(sell){const sellType=state.vehicles[state.vehicles.length-1];sell.hidden=!(state.vehicles.length>1&&['stops','depot','road'].includes(step)&&state.money<requiredCost);sell.disabled=sell.hidden;sell.textContent=sell.hidden?'♻️ Продати зайвий транспорт':'♻️ Продати зайвий транспорт (+'+money(vehicleRefund(sellType))+')';}
+    const set=(id,action,cost)=>{
+      const el=document.getElementById(id);
+      if(el)el.disabled=!(tutorialAllows(action)&&state.money>=cost);
+    };
+    set('lttBuyTram','vehicle',3200);
+    set('lttBuyBus','vehicle',2400);
+    set('lttBuyTrolley','vehicle',2900);
+    set('lttBuildStop','stops',1200);
+    set('lttBuildDepot','depot',3200);
+    set('lttBuildRoad','road',600);
+    const route=document.getElementById('lttLaunchRoute');
+    if(route)route.disabled=!(tutorialAllows('route')&&state.vehicles.length>0&&state.stops>=2&&state.depots>=1&&state.roads>=1);
+    const aid=document.getElementById('lttClaimAid');
+    if(aid){
+      aid.disabled=state.starterAidClaimed||!(step==='aid'||step==='done');
+      aid.textContent=state.starterAidClaimed?'✅ Допомогу отримано':'💰 Отримати 600 ₴';
+    }
+  }
   function persist(){try{localStorage.setItem(saveKey,JSON.stringify(state))}catch(error){lastAction='Не вдалося зберегти гру: сховище браузера переповнене.'}}
   function renderCollection(){
     const grid=document.getElementById('lttCollectionGrid');
@@ -1464,12 +1547,13 @@ stopsBtn.addEventListener('click',async function(){
     grid.innerHTML=collectionItems.map(item=>{
       const isOwned=state.collection.includes(item.id);
       const canAfford=state.money>=item.price;
+      const tutorialLocked=tutorialStep()!=='done';
       return '<article class="ltt-collection-card '+(isOwned?'owned':'')+'">'+
         '<div class="ltt-collection-icon">'+item.icon+'</div>'+
         '<span class="ltt-collection-rarity '+item.rarityClass+'">'+item.rarity+'</span>'+
         '<div class="ltt-collection-name">'+item.name+'</div>'+
         '<div class="ltt-collection-desc">'+item.description+'</div>'+
-        '<button '+(isOwned?'disabled':'')+' data-collection-buy="'+item.id+'">'+(isOwned?'✅ У колекції':('Відкрити · '+money(item.price)))+'</button>'+
+        '<button '+((isOwned||tutorialLocked||!canAfford)?'disabled':'')+' data-collection-buy="'+item.id+'">'+(isOwned?'✅ У колекції':tutorialLocked?'🔒 Спочатку навчання':('Відкрити · '+money(item.price)))+'</button>'+
       '</article>';
     }).join('');
   }
@@ -1482,9 +1566,7 @@ stopsBtn.addEventListener('click',async function(){
     document.getElementById('lttGameCityItems').innerHTML='<div class="ltt-tycoon-city-item">🏠<small>Місто · рівень '+state.level+'</small></div><div class="ltt-tycoon-city-item">🚏<small>Зупинки · '+state.stops+'</small></div><div class="ltt-tycoon-city-item">🚋<small>Транспорт · '+state.vehicles.length+'</small></div><div class="ltt-tycoon-city-item">🏢<small>Депо · '+state.depots+'</small></div><div class="ltt-tycoon-city-item">🚋<small>Трамваї · '+counts.tram+'</small></div><div class="ltt-tycoon-city-item">🚌<small>Автобуси · '+counts.bus+'</small></div><div class="ltt-tycoon-city-item">🚎<small>Тролейбуси · '+counts.trolley+'</small></div><div class="ltt-tycoon-city-item">🛣️<small>Дороги · '+state.roads+'</small></div>';
     document.getElementById('lttGameSummary').textContent='Відкриті маршрути: '+state.routes+' · Зароблено за весь час: '+money(state.totalEarned);
     document.getElementById('lttGameLog').textContent=lastAction;
-    document.getElementById('lttLaunchRoute').disabled=!(state.vehicles.length>0&&state.stops>=2&&state.depots>=1&&state.roads>=1);
-    const aidButton=document.getElementById('lttClaimAid');
-    if(aidButton){aidButton.disabled=state.starterAidClaimed;aidButton.textContent=state.starterAidClaimed?'✅ Допомогу отримано':'💰 Отримати 600 ₴';}
+    renderTutorial();
     renderCollection();
   }
   function spend(cost,description,action){
@@ -1492,15 +1574,23 @@ stopsBtn.addEventListener('click',async function(){
     state.money-=cost;action();lastAction=description;persist();render();
   }
   function buy(type,cost,label){spend(cost,'Куплено: '+label,()=>{state.vehicles.push(type);state.xp+=35;});}
+  document.getElementById('lttTutorialStart').addEventListener('click',()=>{state.tutorialStarted=true;lastAction='Навчання розпочато! Виконуй підказки по черзі. 🎓';persist();render();});
+  document.getElementById('lttTutorialSell').addEventListener('click',()=>{
+    const step=tutorialStep(),required=step==='stops'?1200:step==='depot'?3200:step==='road'?600:Infinity;
+    if(!['stops','depot','road'].includes(step)||state.vehicles.length<=1||state.money>=required)return;
+    const type=state.vehicles.pop(),refund=vehicleRefund(type);state.money+=refund;lastAction='Продано зайвий транспорт. Повернено '+money(refund)+'. Один транспорт залишився для маршруту.';persist();render();
+  });
   document.getElementById('lttBuyTram').addEventListener('click',()=>buy('tram',3200,'трамвай 🚋'));
   document.getElementById('lttBuyBus').addEventListener('click',()=>buy('bus',2400,'автобус 🚌'));
   document.getElementById('lttBuyTrolley').addEventListener('click',()=>buy('trolley',2900,'тролейбус 🚎'));
   document.getElementById('lttClaimAid').addEventListener('click',()=>{
+    if(!tutorialAllows('aid'))return;
     if(state.starterAidClaimed){lastAction='Стартову допомогу 600 ₴ ти вже отримав.';render();return;}
     state.money+=600;state.starterAidClaimed=true;lastAction='Отримано 600 ₴ безкоштовної стартової допомоги. Повертати не потрібно! 💝';persist();render();
   });
   document.getElementById('lttCollectionGrid').addEventListener('click',event=>{
     const button=event.target.closest('[data-collection-buy]');if(!button)return;
+    if(tutorialStep()!=='done'){lastAction='Спочатку заверши навчання — тоді відкриється колекція! 🎓';render();return;}
     const item=collectionItems.find(entry=>entry.id===button.dataset.collectionBuy);
     if(!item||state.collection.includes(item.id))return;
     spend(item.price,'До колекції додано: '+item.name+'! 🏆',()=>{state.collection.push(item.id);state.vehicles.push(item.type);state.xp+=45;});
