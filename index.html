@@ -202,6 +202,15 @@ body.light-theme .achievement-chip{background:#e8eff2;border-color:#cbd9df}body.
     <select id="mapStyleSelect" class="setting-select"><option value="standard">Класична — OpenStreetMap</option><option value="light">Світла — Esri Streets</option><option value="dark">Темна — Esri Dark</option><option value="topo">Топографічна</option><option value="satellite">Супутник</option></select>
     <label for="vehicleStyleSelect" class="detail" id="vehicleStyleLabel">Стиль значків транспорту</label>
     <select id="vehicleStyleSelect" class="setting-select"><option value="classic">Класичні — з емодзі</option><option value="minimal">Мінімалістичні</option><option value="modern">Сучасні картки</option><option value="mono">Лаконічні літери</option></select>
+    <div id="lttArrowSettings" class="ltt-arrow-settings" hidden>
+      <label for="lttArrowColor" class="detail">🎨 Колір стрілочки</label>
+      <input type="color" id="lttArrowColor" value="#38bdf8" aria-label="Колір стрілочки">
+      <label for="lttArrowTheme" class="detail">✨ Оформлення стрілочки</label>
+      <select id="lttArrowTheme" class="setting-select"><option value="glass">💎 Скляний</option><option value="spring">🌸 Весняний</option><option value="summer">☀️ Літній</option><option value="autumn">🍂 Осінній</option><option value="winter">❄️ Зимовий</option></select>
+      <p class="small">Стрілка показує напрямок за останніми GPS-позиціями транспорту.</p>
+    </div>
+    <label for="lttRouteLineStyle" class="detail">🛤️ Стиль лінії маршруту</label>
+    <select id="lttRouteLineStyle" class="setting-select"><option value="normal">〰️ Звичайна</option><option value="neon">💡 Неонова</option><option value="electric">⚡ Електрична</option><option value="ice">🧊 Крижана</option></select>
     <label for="refreshRate" class="detail" id="refreshRateLabel">Частота оновлення GPS</label>
     <select id="refreshRate" class="setting-select"><option value="30">Кожні 30 секунд</option><option value="60">Кожні 60 секунд</option><option value="90">Кожні 90 секунд</option></select>
     <label for="seasonThemeSelect" class="detail" id="seasonThemeLabel">Сезонний стиль карти</label>
@@ -294,7 +303,7 @@ const MAP_STYLES={
   topo:{name:'Esri Topographic',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',maxNativeZoom:19,attribution:'Tiles &copy; Esri, HERE, Garmin, Intermap, increment P Corp., GEBCO, USGS, FAO, NPS, NRCAN, GeoBase, IGN, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), (c) OpenStreetMap contributors, and the GIS User Community'},
   satellite:{name:'Esri World Imagery',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',maxNativeZoom:19,attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community'}
 };
-let currentMapStyle='standard';let currentVehicleStyle='classic';let baseTileLayer=null;
+let currentMapStyle='standard';let currentVehicleStyle='classic';let currentRouteLineStyle='normal';let baseTileLayer=null;
 let effectiveMapStyle=null;
 let autoNightEnabled=true;
 let currentSeason='none';
@@ -303,7 +312,7 @@ try{
   const savedSeason=localStorage.getItem('lvivSeasonThemeV1');
   if(['none','spring','summer','autumn','winter'].includes(savedSeason))currentSeason=savedSeason;
 }catch(error){}
-try{const savedMapStyle=localStorage.getItem('lvivMapStyleV1');if(MAP_STYLES[savedMapStyle])currentMapStyle=savedMapStyle;const savedVehicleStyle=localStorage.getItem('lvivVehicleStyleV1');if(['classic','minimal','modern','mono'].includes(savedVehicleStyle))currentVehicleStyle=savedVehicleStyle}catch(error){}
+try{const savedMapStyle=localStorage.getItem('lvivMapStyleV1');if(MAP_STYLES[savedMapStyle])currentMapStyle=savedMapStyle;const savedVehicleStyle=localStorage.getItem('lvivVehicleStyleV1');if(['classic','minimal','modern','mono','arrow'].includes(savedVehicleStyle))currentVehicleStyle=savedVehicleStyle;const savedLineStyle=localStorage.getItem('lvivRouteLineStyleV1');if(['normal','neon','electric','ice'].includes(savedLineStyle))currentRouteLineStyle=savedLineStyle}catch(error){}
 function isNightHours(){
   const hour=new Date().getHours();
   return hour>=20||hour<6;
@@ -609,7 +618,7 @@ function makeVehicleIcon(route){
 }
 function applyVehicleIconStyle(){
   try{localStorage.setItem('lvivVehicleStyleV1',currentVehicleStyle)}catch(error){}
-  vehicleMarkers.forEach(function(entry){const route=allRoutes.find(function(item){return item.short_name===entry.routeName&&item.type===currentMode});if(route)entry.marker.setIcon(makeVehicleIcon(route))});
+  vehicleMarkers.forEach(function(entry){const route=allRoutes.find(function(item){return item.short_name===entry.routeName&&item.type===currentMode});if(route)entry.marker.setIcon(makeVehicleIcon(route,entry.heading||0))});
 }
 function makeVehiclePopup(route,vehicle){
   const label=currentMode==='bus'?tx('Автобус ','Bus '):tx('Трамвай ','Tram ');
@@ -624,6 +633,13 @@ function makeVehiclePopup(route,vehicle){
 }
 
 // Плавно переміщуємо значок між двома реальними GPS-точками.
+function calculateVehicleBearing(fromLat,fromLng,toLat,toLng){
+  const toRad=Math.PI/180,toDeg=180/Math.PI;
+  const p1=fromLat*toRad,p2=toLat*toRad,dl=(toLng-fromLng)*toRad;
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return (Math.atan2(y,x)*toDeg+360)%360;
+}
 function moveMarkerSmoothly(entry,lat,lng){
   const current=entry.marker.getLatLng();
   if(current.distanceTo([lat,lng])<1){entry.animation=null;return}
@@ -715,6 +731,27 @@ async function loadStopArrivals(stop,marker){
   }
 }
 
+async function addStyledRouteLine(points,routeColor,index){
+  const directionDash=index===0?null:'9 8';
+  let layers=[];
+  if(currentRouteLineStyle==='neon'){
+    layers.push(L.polyline(points,{color:routeColor,weight:13,opacity:.48,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-neon-glow'}).addTo(map));
+    layers.push(L.polyline(points,{color:routeColor,weight:index===0?6:5,opacity:1,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-neon-core'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#f5ffff',weight:2.4,opacity:.95,dashArray:'2 18',lineCap:'round',lineJoin:'round',className:'route-flow-animation'}).addTo(map));
+  }else if(currentRouteLineStyle==='electric'){
+    layers.push(L.polyline(points,{color:'#244bff',weight:12,opacity:.75,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-electric-glow'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#28e7ff',weight:index===0?5:4,opacity:1,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-electric-core'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#ffffff',weight:2.2,opacity:1,dashArray:'1 12',lineCap:'round',lineJoin:'round',className:'route-line-electric-flow'}).addTo(map));
+  }else if(currentRouteLineStyle==='ice'){
+    layers.push(L.polyline(points,{color:'#61d8ff',weight:12,opacity:.68,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-ice-glow'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#e7fbff',weight:index===0?5:4,opacity:.98,dashArray:directionDash,lineCap:'round',lineJoin:'round',className:'route-line-ice-core'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#72d9ff',weight:2,opacity:1,dashArray:'2 15',lineCap:'round',lineJoin:'round',className:'route-flow-animation'}).addTo(map));
+  }else{
+    layers.push(L.polyline(points,{color:routeColor,weight:index===0?6:5,opacity:index===0?.95:.72,dashArray:directionDash,lineCap:'round',lineJoin:'round'}).addTo(map));
+    layers.push(L.polyline(points,{color:'#ffffff',weight:2.2,opacity:.9,dashArray:'2 18',lineCap:'round',lineJoin:'round',className:'route-flow-animation'}).addTo(map));
+  }
+  layers.forEach(function(layer){selectedRouteLayers.push(layer)});
+}
 async function showRoute(routeName){
   selectedRouteShortName=routeName;
   applyVehicleFilter();
@@ -736,9 +773,8 @@ async function showRoute(routeName){
       if(!Array.isArray(shape)||shape.length<2)return;
       const points=shape.filter(function(point){return Array.isArray(point)&&point.length>=2&&Number.isFinite(Number(point[0]))&&Number.isFinite(Number(point[1]))}).map(function(point){return[Number(point[0]),Number(point[1])]});
       if(points.length<2)return;
-      const line=L.polyline(points,{color:color,weight:index===0?6:5,opacity:index===0?.95:.72,dashArray:index===0?null:'9 8',lineCap:'round',lineJoin:'round'}).addTo(map);
-      const flowLine=L.polyline(points,{color:'#ffffff',weight:2.2,opacity:.9,dashArray:'2 18',lineCap:'round',lineJoin:'round',className:'route-flow-animation'}).addTo(map);
-      selectedRouteLayers.push(line,flowLine);points.forEach(function(point){bounds.push(point)});
+      addStyledRouteLine(points,color,index);
+      points.forEach(function(point){bounds.push(point)});
     });
     const stopsByDirection=Array.isArray(data.stops)?data.stops:[];
     const uniqueStops=new Map();
@@ -836,11 +872,18 @@ async function refreshVehicles(){
         const key=modeAtStart+'::'+route.short_name+'::'+String(vehicle.id);seenVehicles.add(key);freshCount++;
         let entry=vehicleMarkers.get(key);
         if(!entry){
-          const marker=L.marker([lat,lng],{icon:makeVehicleIcon(route),title:(modeAtStart==='bus'?'Автобус ':'Трамвай ')+displayRouteNumber(route.short_name)});
-          entry={marker:marker,routeName:route.short_name,animation:null};vehicleMarkers.set(key,entry);
+          const marker=L.marker([lat,lng],{icon:makeVehicleIcon(route,0),title:(modeAtStart==='bus'?'Автобус ':'Трамвай ')+displayRouteNumber(route.short_name)});
+          entry={marker:marker,routeName:route.short_name,animation:null,heading:0};vehicleMarkers.set(key,entry);
           applyVehicleFilter();
           marker.on('click',function(){setFollowTarget(marker,route.short_name);showRoute(route.short_name)});
-        }else moveMarkerSmoothly(entry,lat,lng);
+        }else{
+          const previous=entry.marker.getLatLng();
+          if(previous.distanceTo([lat,lng])>3){
+            entry.heading=calculateVehicleBearing(previous.lat,previous.lng,lat,lng);
+            if(currentVehicleStyle==='arrow')entry.marker.setIcon(makeVehicleIcon(route,entry.heading));
+          }
+          moveMarkerSmoothly(entry,lat,lng);
+        }
         entry.marker.setPopupContent(makeVehiclePopup(route,vehicle));
       });
     });
@@ -1202,6 +1245,26 @@ stopsBtn.addEventListener('click',async function(){
     .ltt-skin-eco{padding:7px 10px;border-radius:18px 18px 8px 18px;background:linear-gradient(145deg,#f0ffe9,#9bd69c);border:2px solid #54a96b;color:#185534;box-shadow:0 3px 9px #0018}
     .ltt-skin-sport{padding:6px 11px;border-radius:5px;background:repeating-linear-gradient(135deg,#172432 0 7px,#203b4c 7px 14px);border:2px solid var(--route-color);border-left-width:7px;color:#fff;box-shadow:0 3px 0 #07121a;text-shadow:0 1px 3px #000}
     .ltt-skin-bubble{padding:7px 11px;border-radius:22px;background:linear-gradient(145deg,#ffffffed,#cfe3f5dc);border:1px solid #fff;color:#19364d;box-shadow:0 4px 12px #0018,inset 0 2px 3px #fff;backdrop-filter:blur(7px)}
+    .ltt-arrow-settings{margin:4px 0 10px;padding:10px 12px;border:1px solid #41616f;border-radius:12px;background:#142833}
+    .ltt-arrow-settings[hidden]{display:none!important}
+    .ltt-arrow-settings input[type=color]{width:100%;height:38px;padding:3px;border-radius:8px;background:#14232d;border:1px solid #3c5662}
+    .ltt-direction-arrow{width:38px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transform:rotate(var(--arrow-rotation,0deg));clip-path:polygon(50% 0,100% 36%,70% 36%,70% 100%,30% 100%,30% 36%,0 36%);background:linear-gradient(145deg,var(--arrow-color),#15394b);color:#fff;font-weight:900;filter:drop-shadow(0 3px 5px #0018);text-shadow:0 1px 3px #0019}
+    .ltt-direction-arrow .ltt-arrow-symbol{font-size:13px;line-height:15px;margin-top:12px}
+    .ltt-direction-arrow b{font-size:11px;line-height:13px}
+    .ltt-arrow-glass{background:linear-gradient(145deg,#ffffffbd,#6dc9e28c);border:2px solid var(--arrow-color);backdrop-filter:blur(5px);color:#11394a;filter:drop-shadow(0 0 5px var(--arrow-color))}
+    .ltt-arrow-spring{background:linear-gradient(145deg,#d9ffd9,#62c78a);border:2px solid var(--arrow-color);color:#185536;filter:drop-shadow(0 0 5px #83e7a4)}
+    .ltt-arrow-summer{background:linear-gradient(145deg,#fff2a6,#ffa83c);border:2px solid var(--arrow-color);color:#67400c;filter:drop-shadow(0 0 5px #ffc45b)}
+    .ltt-arrow-autumn{background:linear-gradient(145deg,#ffd29a,#b95627);border:2px solid var(--arrow-color);color:#fff8e8;filter:drop-shadow(0 0 5px #d77b35)}
+    .ltt-arrow-winter{background:linear-gradient(145deg,#f4fdff,#81d6f2);border:2px solid var(--arrow-color);color:#12516b;filter:drop-shadow(0 0 6px #a6eaff)}
+    .route-line-neon-glow{filter:drop-shadow(0 0 5px #32efff) drop-shadow(0 0 10px #32efff)}
+    .route-line-neon-core{filter:drop-shadow(0 0 4px currentColor)}
+    .route-line-electric-glow{filter:drop-shadow(0 0 5px #596cff) drop-shadow(0 0 10px #274dff)}
+    .route-line-electric-core{filter:drop-shadow(0 0 4px #4dfaff)}
+    .route-line-electric-flow{stroke-dasharray:1 12;animation:ltt-electric-pulse .55s linear infinite;filter:drop-shadow(0 0 4px #6efcff)}
+    .route-line-ice-glow{filter:drop-shadow(0 0 5px #53d7ff) drop-shadow(0 0 8px #c4f3ff)}
+    .route-line-ice-core{filter:drop-shadow(0 0 4px #d9f8ff)}
+    @keyframes ltt-electric-pulse{to{stroke-dashoffset:-26}}
+    @media(prefers-reduced-motion:reduce){.route-line-electric-flow{animation:none!important}}
     .ltt-map3d{position:absolute;inset:0;z-index:3;background:#d9e5eb}.ltt-map3d[hidden]{display:none!important}
     .ltt-extra-map-btn{width:100%;margin:0 0 7px!important;min-width:0!important}
     #lttTycoon[hidden]{display:none!important}
@@ -1296,7 +1359,7 @@ stopsBtn.addEventListener('click',async function(){
   const skinSelect = document.getElementById('vehicleStyleSelect');
   const skinOptions = [
     ['neon', '✨ Неонові'], ['retro', '🕹️ Ретро'],
-    ['cute', '🌈 Милі'], ['glass', '💎 Скляні'],
+    ['cute', '🌈 Милі'], ['glass', '💎 Скляні'], ['arrow', '➡️ Стрілочки — напрямок руху'],
     ['3d', '🧊 Об’ємні 3D'], ['pixel', '👾 Піксельні'],
     ['metro', '🚇 Метро'], ['outline', '⭕ Контурні'],
     ['winter', '❄️ Зимові'], ['eco', '🌿 Еко'],
@@ -1314,8 +1377,31 @@ stopsBtn.addEventListener('click',async function(){
       if (typeof applyVehicleIconStyle === 'function') applyVehicleIconStyle();
     }
   }
+  let lttArrowColor='#38bdf8';
+  let lttArrowTheme='glass';
+  try{
+    const savedArrowColor=localStorage.getItem('lvivArrowColorV1');
+    if(savedArrowColor&&/^#[0-9a-f]{6}$/i.test(savedArrowColor))lttArrowColor=savedArrowColor;
+    const savedArrowTheme=localStorage.getItem('lvivArrowThemeV1');
+    if(['glass','spring','summer','autumn','winter'].includes(savedArrowTheme))lttArrowTheme=savedArrowTheme;
+  }catch(error){}
+  const arrowSettings=document.getElementById('lttArrowSettings');
+  const arrowColorInput=document.getElementById('lttArrowColor');
+  const arrowThemeSelect=document.getElementById('lttArrowTheme');
+  function refreshArrowSettings(){
+    if(arrowSettings)arrowSettings.hidden=currentVehicleStyle!=='arrow';
+    if(arrowColorInput)arrowColorInput.value=lttArrowColor;
+    if(arrowThemeSelect)arrowThemeSelect.value=lttArrowTheme;
+  }
+  refreshArrowSettings();
   const originalMakeVehicleIcon = makeVehicleIcon;
-  makeVehicleIcon = function (route) {
+  makeVehicleIcon = function (route, heading) {
+    if(currentVehicleStyle==='arrow'){
+      const symbol=currentMode==='bus'?'🚌':'🚋';
+      const number=escapeHtml(displayRouteNumber(route.short_name||''));
+      const angle=Number.isFinite(Number(heading))?Number(heading):0;
+      return L.divIcon({className:'vehicle-div-icon',html:'<div class="ltt-direction-arrow ltt-arrow-'+lttArrowTheme+'" style="--arrow-color:'+lttArrowColor+';--arrow-rotation:'+angle+'deg"><span class="ltt-arrow-symbol">'+symbol+'</span><b>'+number+'</b></div>',iconSize:[46,54],iconAnchor:[23,27]});
+    }
     if (!['neon','retro','cute','glass','3d','pixel','metro','outline','winter','eco','sport','bubble'].includes(currentVehicleStyle)) return originalMakeVehicleIcon(route);
     const symbol = currentMode === 'bus' ? '🚌' : '🚋';
     const number = escapeHtml(displayRouteNumber(route.short_name || ''));
@@ -1331,8 +1417,29 @@ stopsBtn.addEventListener('click',async function(){
   if (skinSelect) skinSelect.addEventListener('change', function () {
     currentVehicleStyle = skinSelect.value;
     try { localStorage.setItem('lvivVehicleStyleV1', currentVehicleStyle); } catch (error) {}
+    refreshArrowSettings();
     if (typeof applyVehicleIconStyle === 'function') applyVehicleIconStyle();
   });
+  if(arrowColorInput)arrowColorInput.addEventListener('input',function(){
+    lttArrowColor=arrowColorInput.value;
+    try{localStorage.setItem('lvivArrowColorV1',lttArrowColor)}catch(error){}
+    if(currentVehicleStyle==='arrow')applyVehicleIconStyle();
+  });
+  if(arrowThemeSelect)arrowThemeSelect.addEventListener('change',function(){
+    lttArrowTheme=arrowThemeSelect.value;
+    try{localStorage.setItem('lvivArrowThemeV1',lttArrowTheme)}catch(error){}
+    if(currentVehicleStyle==='arrow')applyVehicleIconStyle();
+  });
+  const routeLineStyleSelect=document.getElementById('lttRouteLineStyle');
+  if(routeLineStyleSelect){
+    routeLineStyleSelect.value=currentRouteLineStyle;
+    routeLineStyleSelect.addEventListener('change',function(){
+      currentRouteLineStyle=['normal','neon','electric','ice'].includes(routeLineStyleSelect.value)?routeLineStyleSelect.value:'normal';
+      try{localStorage.setItem('lvivRouteLineStyleV1',currentRouteLineStyle)}catch(error){}
+      if(selectedRouteShortName)showRoute(selectedRouteShortName);
+      document.getElementById('settingsMessage').textContent='Стиль лінії маршруту змінено.';
+    });
+  }
 
   // Build the weather selector and visual layers without changing the existing map.
   const settingsCard = skinSelect ? skinSelect.closest('.card') : document.querySelector('.sidebar .card:last-of-type');
