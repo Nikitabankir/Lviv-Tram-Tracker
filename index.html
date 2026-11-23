@@ -1187,12 +1187,21 @@ stopsBtn.addEventListener('click',async function(){
     .ltt-extra-select{display:block;width:100%;padding:10px;border-radius:9px;background:#14232d;color:#edf5f8;border:1px solid #3c5662}
     body.light-theme .ltt-extra-select{background:#fff;color:#172832;border-color:#cbd9df}
     body.light-theme .ltt-weather-badge{background:#fff;color:#172832;border-color:#cbd9df}
-    .ltt-skin-neon,.ltt-skin-retro,.ltt-skin-cute,.ltt-skin-glass{display:flex;align-items:center;justify-content:center;gap:5px;font-weight:900;white-space:nowrap}
+    .ltt-skin-neon,.ltt-skin-retro,.ltt-skin-cute,.ltt-skin-glass,.ltt-skin-3d,.ltt-skin-pixel,.ltt-skin-metro,.ltt-skin-outline,.ltt-skin-winter,.ltt-skin-eco,.ltt-skin-sport,.ltt-skin-bubble{display:flex;align-items:center;justify-content:center;gap:5px;font-weight:900;white-space:nowrap}
     .ltt-skin-neon{padding:6px 10px;border-radius:14px;background:#11162bea;border:2px solid var(--route-color);color:#fff;box-shadow:0 0 8px var(--route-color),0 0 20px var(--route-color);text-shadow:0 0 7px var(--route-color)}
     .ltt-skin-retro{padding:6px 9px;border-radius:6px;background:#f3d99e;border:3px solid #734d2b;color:#49321e;box-shadow:3px 4px 0 #37271e;font-family:Georgia,serif}
     .ltt-skin-cute{width:52px;height:44px;flex-direction:column;gap:0;border-radius:17px 17px 20px 20px;background:#fff1f6;border:2px solid #f29ac0;color:#633c5b;box-shadow:0 3px 9px #0005}
     .ltt-skin-cute span{font-size:17px}.ltt-skin-cute b{font-size:10px}
     .ltt-skin-glass{padding:6px 10px;border-radius:15px;background:rgba(23,49,66,.72);border:1px solid rgba(255,255,255,.8);color:#fff;box-shadow:0 4px 15px #0019;backdrop-filter:blur(8px)}
+    .ltt-skin-3d{padding:7px 11px;border-radius:11px;background:linear-gradient(145deg,var(--route-color),#18394a);border:2px solid #f2ffff;color:#fff;box-shadow:inset 0 2px 0 #ffffff9c,0 4px 0 #10202a,0 7px 12px #0006;text-shadow:0 1px 2px #0008}
+    .ltt-skin-pixel{padding:6px 9px;border-radius:3px;background:#202331;border:3px solid var(--route-color);color:#fff2b5;box-shadow:4px 0 0 #11131c,0 4px 0 #11131c,4px 4px 0 #11131c;font-family:monospace;letter-spacing:1px;image-rendering:pixelated}
+    .ltt-skin-metro{width:56px;height:56px;flex-direction:column;gap:0;border-radius:50%;background:radial-gradient(circle at 35% 25%,#ffffff55,#142b3b 70%);border:5px solid var(--route-color);color:#fff;box-shadow:0 3px 9px #0006,inset 0 0 0 2px #ffffff55}
+    .ltt-skin-metro span{font-size:17px;line-height:19px}.ltt-skin-metro b{font-size:11px}
+    .ltt-skin-outline{padding:6px 10px;border-radius:10px;background:#fff;border:3px solid var(--route-color);color:var(--route-color);box-shadow:0 2px 7px #0004;text-shadow:none}
+    .ltt-skin-winter{padding:7px 10px;border-radius:14px;background:linear-gradient(145deg,#f5fdff,#a8dff4);border:2px solid #dff8ff;color:#14516e;box-shadow:0 0 0 2px #65bfe8,0 4px 10px #0018;text-shadow:0 1px #fff}
+    .ltt-skin-eco{padding:7px 10px;border-radius:18px 18px 8px 18px;background:linear-gradient(145deg,#f0ffe9,#9bd69c);border:2px solid #54a96b;color:#185534;box-shadow:0 3px 9px #0018}
+    .ltt-skin-sport{padding:6px 11px;border-radius:5px;background:repeating-linear-gradient(135deg,#172432 0 7px,#203b4c 7px 14px);border:2px solid var(--route-color);border-left-width:7px;color:#fff;box-shadow:0 3px 0 #07121a;text-shadow:0 1px 3px #000}
+    .ltt-skin-bubble{padding:7px 11px;border-radius:22px;background:linear-gradient(145deg,#ffffffed,#cfe3f5dc);border:1px solid #fff;color:#19364d;box-shadow:0 4px 12px #0018,inset 0 2px 3px #fff;backdrop-filter:blur(7px)}
     .ltt-map3d{position:absolute;inset:0;z-index:3;background:#d9e5eb}.ltt-map3d[hidden]{display:none!important}
     .ltt-extra-map-btn{width:100%;margin:0 0 7px!important;min-width:0!important}
     #lttTycoon[hidden]{display:none!important}
@@ -1287,7 +1296,11 @@ stopsBtn.addEventListener('click',async function(){
   const skinSelect = document.getElementById('vehicleStyleSelect');
   const skinOptions = [
     ['neon', '✨ Неонові'], ['retro', '🕹️ Ретро'],
-    ['cute', '🌈 Милі'], ['glass', '💎 Скляні']
+    ['cute', '🌈 Милі'], ['glass', '💎 Скляні'],
+    ['3d', '🧊 Об’ємні 3D'], ['pixel', '👾 Піксельні'],
+    ['metro', '🚇 Метро'], ['outline', '⭕ Контурні'],
+    ['winter', '❄️ Зимові'], ['eco', '🌿 Еко'],
+    ['sport', '🏁 Спортивні'], ['bubble', '🫧 Пузирчасті']
   ];
   if (skinSelect) {
     skinOptions.forEach(([value, label]) => {
@@ -1303,12 +1316,12 @@ stopsBtn.addEventListener('click',async function(){
   }
   const originalMakeVehicleIcon = makeVehicleIcon;
   makeVehicleIcon = function (route) {
-    if (!['neon','retro','cute','glass'].includes(currentVehicleStyle)) return originalMakeVehicleIcon(route);
+    if (!['neon','retro','cute','glass','3d','pixel','metro','outline','winter','eco','sport','bubble'].includes(currentVehicleStyle)) return originalMakeVehicleIcon(route);
     const symbol = currentMode === 'bus' ? '🚌' : '🚋';
     const number = escapeHtml(displayRouteNumber(route.short_name || ''));
     const color = safeColor(route.color);
     const className = 'ltt-skin-' + currentVehicleStyle;
-    const dimensions = {neon:[76,42,38,21],retro:[76,40,38,20],cute:[56,48,28,24],glass:[82,40,41,20]}[currentVehicleStyle];
+    const dimensions = {neon:[76,42,38,21],retro:[76,40,38,20],cute:[56,48,28,24],glass:[82,40,41,20],'3d':[78,46,39,23],pixel:[76,44,38,22],metro:[60,60,30,30],outline:[82,44,41,22],winter:[84,46,42,23],eco:[80,44,40,22],sport:[86,42,43,21],bubble:[82,46,41,23]}[currentVehicleStyle];
     return L.divIcon({
       className: 'vehicle-div-icon',
       html: '<div class="'+className+'" style="--route-color:'+color+'"><span>'+symbol+'</span><b>'+number+'</b></div>',
