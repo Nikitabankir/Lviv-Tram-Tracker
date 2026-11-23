@@ -1212,7 +1212,22 @@ stopsBtn.addEventListener('click',async function(){
     .ltt-tycoon-summary{font-size:11px;color:#d1e1e6;line-height:1.7;margin-top:9px}.ltt-tycoon-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
     .ltt-tycoon-actions button{margin:0;padding:11px 8px;font-size:11px;background:#6ce0bc}.ltt-tycoon-actions button.secondary{background:#294956;color:#f1f8fa;border:1px solid #52717d}
     .ltt-tycoon-note{font-size:10px;line-height:1.5;color:#c0d1d7;margin-top:10px}.ltt-tycoon-log{font-size:11px;line-height:1.7;color:#d6e7ec;min-height:22px}
-    @media(max-width:760px){.ltt-tycoon-columns{grid-template-columns:1fr}.ltt-tycoon-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ltt-tycoon-title{font-size:20px}#lttTycoon{padding:12px}.ltt-tycoon-city-items{gap:7px}}
+    .ltt-tycoon-aid{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 15px;margin:12px 0 15px;border:1px solid #8b7850;border-radius:15px;background:linear-gradient(115deg,#4b4026,#263b3c)}
+    .ltt-tycoon-aid strong{display:block;font-size:13px}.ltt-tycoon-aid p{margin:4px 0 0;font-size:10px;color:#e3d8bd}.ltt-tycoon-aid button{width:auto;margin:0;min-width:150px}.ltt-tycoon-aid button:disabled{opacity:.58;cursor:not-allowed}
+    .ltt-collection-panel{margin-top:2px}.ltt-collection-progress{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#203b46;color:#d8e9ec;font-size:11px}
+    .ltt-collection-progress strong{font-size:14px;color:#fff}.ltt-collection-achievements{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+    .ltt-collection-achievement{padding:5px 8px;border-radius:999px;background:#263944;color:#a9bdc5;border:1px solid #455b65;font-size:9px;font-weight:800}
+    .ltt-collection-achievement.unlocked{background:#36563f;color:#e2ffe8;border-color:#6b9e75}
+    .ltt-collection-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+    .ltt-collection-card{display:flex;flex-direction:column;gap:7px;min-width:0;padding:11px;border:1px solid #415d68;border-radius:14px;background:linear-gradient(155deg,#1c3945,#142a35)}
+    .ltt-collection-card.owned{border-color:#5d9d78;box-shadow:inset 0 0 0 1px #5d9d7833}
+    .ltt-collection-icon{display:grid;place-items:center;min-height:62px;border-radius:10px;background:#e8f3ee;color:#1d3b3e;font-size:35px}
+    .ltt-collection-name{font-size:12px;font-weight:900;line-height:1.3;color:#f2f8fa}.ltt-collection-desc{min-height:28px;font-size:9px;line-height:1.4;color:#b9cbd1}
+    .ltt-collection-rarity{align-self:flex-start;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900;background:#304854;color:#d8e9ee}
+    .ltt-collection-rarity.rare{background:#234e73;color:#d7ebff}.ltt-collection-rarity.epic{background:#50346e;color:#f0dfff}.ltt-collection-rarity.legendary{background:#6a5125;color:#ffedb6}
+    .ltt-collection-card button{width:100%;margin:0;padding:8px 5px;font-size:10px}.ltt-collection-card button:disabled{opacity:.58;cursor:not-allowed}
+    @media(max-width:760px){.ltt-tycoon-columns{grid-template-columns:1fr}.ltt-tycoon-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ltt-tycoon-title{font-size:20px}#lttTycoon{padding:12px}.ltt-tycoon-city-items{gap:7px}.ltt-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:390px){.ltt-collection-grid{grid-template-columns:1fr 1fr}.ltt-tycoon-aid button{width:100%}}
     @media(prefers-reduced-motion:reduce){.ltt-weather-layer{animation:none!important}}
   `;
   document.head.appendChild(style);
@@ -1408,18 +1423,56 @@ stopsBtn.addEventListener('click',async function(){
           <section class="ltt-tycoon-panel"><h3>🏗️ Будівництво</h3><div class="ltt-tycoon-actions"><button class="secondary" id="lttBuildStop">🚏 Зупинка · 1 200 ₴</button><button class="secondary" id="lttBuildDepot">🏢 Депо · 3 200 ₴</button><button class="secondary" id="lttBuildRoad">🛣️ Дорога · 600 ₴</button><button id="lttLaunchRoute">▶️ Відкрити маршрут</button></div><p class="ltt-tycoon-note">Для маршруту потрібні транспорт, 2 зупинки, депо та дорога. Після запуску маршруту надходитиме ігровий дохід.</p></section>
         </div>
       </div>
+      <section class="ltt-tycoon-aid"><div><strong>💝 Стартова допомога</strong><p>Отримай 600 ₴ безкоштовно один раз. Повертати гроші не потрібно.</p></div><button class="secondary" id="lttClaimAid">💰 Отримати 600 ₴</button></section>
+      <section class="ltt-tycoon-panel ltt-collection-panel"><h3>🏆 Колекція транспорту</h3><p class="ltt-tycoon-note">Відкривай моделі за ігрові гроші. Кожна нова модель додається до твого транспортного парку.</p><div class="ltt-collection-progress"><div><strong id="lttCollectionCount">0 / 8 моделей</strong><div>Зібрано моделей</div><div class="ltt-collection-achievements" id="lttCollectionAchievements"></div></div><div id="lttCollectionHint">Почни збирати свою колекцію!</div></div><div class="ltt-collection-grid" id="lttCollectionGrid"></div></section>
     </div>`;
   document.body.appendChild(game);
   const saveKey='lvivTycoonSaveV1';
-  let state={money:10000,level:1,xp:0,vehicles:[],stops:0,depots:0,roads:0,routes:0,totalEarned:0};
+  const collectionItems=[
+    {id:'tram_classic',type:'tram',name:'Класичний трамвай',icon:'🚋',rarity:'Звичайна',rarityClass:'common',price:1400,description:'Надійна класика міських маршрутів.'},
+    {id:'tram_kt4',type:'tram',name:'Tatra KT4',icon:'🚋',rarity:'Рідкісна',rarityClass:'rare',price:2600,description:'Знаковий трамвай для колекції.'},
+    {id:'tram_electron',type:'tram',name:'Electron',icon:'🚊',rarity:'Епічна',rarityClass:'epic',price:4200,description:'Сучасний український трамвай.'},
+    {id:'tram_special',type:'tram',name:'Святковий трамвай',icon:'🎉',rarity:'Легендарна',rarityClass:'legendary',price:6500,description:'Особлива модель для справжнього фаната.'},
+    {id:'bus_city',type:'bus',name:'Міський автобус',icon:'🚌',rarity:'Звичайна',rarityClass:'common',price:1300,description:'Щоденна робота міських маршрутів.'},
+    {id:'bus_lowfloor',type:'bus',name:'Низькопідлоговий автобус',icon:'🚍',rarity:'Рідкісна',rarityClass:'rare',price:2500,description:'Зручна посадка для пасажирів.'},
+    {id:'bus_electric',type:'bus',name:'Електробус',icon:'🔋',rarity:'Епічна',rarityClass:'epic',price:4300,description:'Тихий транспорт на електротязі.'},
+    {id:'bus_tourist',type:'bus',name:'Туристичний автобус',icon:'🌟',rarity:'Легендарна',rarityClass:'legendary',price:6200,description:'Рідкісна модель для особливих рейсів.'}
+  ];
+  const validCollectionIds=new Set(collectionItems.map(item=>item.id));
+  let state={money:10000,level:1,xp:0,vehicles:[],stops:0,depots:0,roads:0,routes:0,totalEarned:0,collection:[],starterAidClaimed:false};
   try{const saved=JSON.parse(localStorage.getItem(saveKey)||'null');if(saved&&typeof saved==='object'){
     state.money=Math.max(0,Number(saved.money)||0);state.level=Math.max(1,Number(saved.level)||1);state.xp=Math.max(0,Number(saved.xp)||0);
     state.vehicles=Array.isArray(saved.vehicles)?saved.vehicles.filter(x=>['tram','bus','trolley'].includes(x)):[];
     ['stops','depots','roads','routes','totalEarned'].forEach(k=>state[k]=Math.max(0,Number(saved[k])||0));
+    state.collection=Array.isArray(saved.collection)?Array.from(new Set(saved.collection.filter(id=>validCollectionIds.has(id)))):[];
+    state.starterAidClaimed=saved.starterAidClaimed===true;
   }}catch(error){}
   let lastAction='Ти став новим транспортним магнатом. Починай будівництво!';
   const money=value=>Math.round(value).toLocaleString('uk-UA')+' ₴';
   function persist(){try{localStorage.setItem(saveKey,JSON.stringify(state))}catch(error){lastAction='Не вдалося зберегти гру: сховище браузера переповнене.'}}
+  function renderCollection(){
+    const grid=document.getElementById('lttCollectionGrid');
+    const count=document.getElementById('lttCollectionCount');
+    const hint=document.getElementById('lttCollectionHint');
+    const achievements=document.getElementById('lttCollectionAchievements');
+    if(!grid||!count||!hint||!achievements)return;
+    const total=collectionItems.length,owned=state.collection.length;
+    count.textContent=owned+' / '+total+' моделей';
+    hint.textContent=owned===total?'Колекцію зібрано повністю! 🏆':('Ще '+(total-owned)+' моделей до повної колекції');
+    const milestones=[{n:1,label:'Перший експонат'},{n:3,label:'Початківець'},{n:5,label:'Знавець транспорту'},{n:8,label:'Легенда колекції'}];
+    achievements.innerHTML=milestones.map(item=>'<span class="ltt-collection-achievement '+(owned>=item.n?'unlocked':'')+'">'+(owned>=item.n?'🏅':'🔒')+' '+item.label+'</span>').join('');
+    grid.innerHTML=collectionItems.map(item=>{
+      const isOwned=state.collection.includes(item.id);
+      const canAfford=state.money>=item.price;
+      return '<article class="ltt-collection-card '+(isOwned?'owned':'')+'">'+
+        '<div class="ltt-collection-icon">'+item.icon+'</div>'+
+        '<span class="ltt-collection-rarity '+item.rarityClass+'">'+item.rarity+'</span>'+
+        '<div class="ltt-collection-name">'+item.name+'</div>'+
+        '<div class="ltt-collection-desc">'+item.description+'</div>'+
+        '<button '+(isOwned?'disabled':'')+' data-collection-buy="'+item.id+'">'+(isOwned?'✅ У колекції':('Відкрити · '+money(item.price)))+'</button>'+
+      '</article>';
+    }).join('');
+  }
   function render(){
     document.getElementById('lttGameMoney').textContent=money(state.money);
     document.getElementById('lttGameLevel').textContent=state.level+' · '+state.xp+'/'+(state.level*250)+' XP';
@@ -1430,6 +1483,9 @@ stopsBtn.addEventListener('click',async function(){
     document.getElementById('lttGameSummary').textContent='Відкриті маршрути: '+state.routes+' · Зароблено за весь час: '+money(state.totalEarned);
     document.getElementById('lttGameLog').textContent=lastAction;
     document.getElementById('lttLaunchRoute').disabled=!(state.vehicles.length>0&&state.stops>=2&&state.depots>=1&&state.roads>=1);
+    const aidButton=document.getElementById('lttClaimAid');
+    if(aidButton){aidButton.disabled=state.starterAidClaimed;aidButton.textContent=state.starterAidClaimed?'✅ Допомогу отримано':'💰 Отримати 600 ₴';}
+    renderCollection();
   }
   function spend(cost,description,action){
     if(state.money<cost){lastAction='Не вистачає грошей для покупки. Заробляй на відкритих маршрутах!';render();return;}
@@ -1439,6 +1495,16 @@ stopsBtn.addEventListener('click',async function(){
   document.getElementById('lttBuyTram').addEventListener('click',()=>buy('tram',3200,'трамвай 🚋'));
   document.getElementById('lttBuyBus').addEventListener('click',()=>buy('bus',2400,'автобус 🚌'));
   document.getElementById('lttBuyTrolley').addEventListener('click',()=>buy('trolley',2900,'тролейбус 🚎'));
+  document.getElementById('lttClaimAid').addEventListener('click',()=>{
+    if(state.starterAidClaimed){lastAction='Стартову допомогу 600 ₴ ти вже отримав.';render();return;}
+    state.money+=600;state.starterAidClaimed=true;lastAction='Отримано 600 ₴ безкоштовної стартової допомоги. Повертати не потрібно! 💝';persist();render();
+  });
+  document.getElementById('lttCollectionGrid').addEventListener('click',event=>{
+    const button=event.target.closest('[data-collection-buy]');if(!button)return;
+    const item=collectionItems.find(entry=>entry.id===button.dataset.collectionBuy);
+    if(!item||state.collection.includes(item.id))return;
+    spend(item.price,'До колекції додано: '+item.name+'! 🏆',()=>{state.collection.push(item.id);state.vehicles.push(item.type);state.xp+=45;});
+  });
   document.getElementById('lttBuildStop').addEventListener('click',()=>spend(1200,'Побудовано нову зупинку 🚏',()=>{state.stops++;state.xp+=20;}));
   document.getElementById('lttBuildDepot').addEventListener('click',()=>spend(3200,'Відкрито нове депо 🏢',()=>{state.depots++;state.xp+=45;}));
   document.getElementById('lttBuildRoad').addEventListener('click',()=>spend(600,'Додано нову дорогу 🛣️',()=>{state.roads++;state.xp+=10;}));
