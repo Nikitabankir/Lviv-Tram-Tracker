@@ -505,11 +505,24 @@ document.getElementById('profileSaveBtn').addEventListener('click',function(){
 function safeColor(value){return /^#[0-9a-f]{6}$/i.test(String(value||''))?value:'#55d6b4'}
 function displayRouteNumber(routeName){
   const name=String(routeName||'').trim();
+  const normalized=name.toUpperCase().replace(/А/g,'A').replace(/\s+/g,'');
+  // The public-facing name is 47A, while the LAD API route code is A47.
+  if(['A47','AA47','47A'].includes(normalized))return '47A';
   const match=name.match(/^[TТAА]\s*0*(\d+)$/i);
   if(match)return String(Number(match[1]));
   const digits=name.match(/^0*(\d+)$/);
   if(digits)return String(Number(digits[1]));
   return name;
+}
+function normalizeRouteSearchText(value){
+  return String(value==null?'':value).toLocaleLowerCase().replace(/а/g,'a').replace(/ё/g,'е').replace(/[^a-z0-9]/g,'');
+}
+function canonicalRouteCode(value){
+  const code=String(value||'').toUpperCase().replace(/А/g,'A').replace(/\s+/g,'');
+  if(['A47','AA47','47A'].includes(code))return 'A47';
+  const match=code.match(/^([AT])0*(\d+)$/);
+  if(match)return match[1]+String(Number(match[2])).padStart(2,'0');
+  return code;
 }
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
 function routeKey(route){return route.type+'|'+route.short_name}
@@ -534,12 +547,14 @@ function createRouteOption(route,showStar){
 }
 function renderRouteSearch(){
   if(!routeSearchInput||!routeSearchResults)return;
-  const query=routeSearchInput.value.trim().toLocaleLowerCase();
+  const query=normalizeRouteSearchText(routeSearchInput.value.trim());
   if(!allRoutes.length){routeSearchResults.textContent=tx('Завантажуємо маршрути…','Loading routes…');return}
-  if(!query){routeSearchResults.textContent=tx('Введи номер маршруту, наприклад 1 або 8.','Enter a route number, for example 1 or 8.');return}
+  if(!query){routeSearchResults.textContent=tx('Введи номер маршруту, наприклад 1, 9 або 47А.','Enter a route number, for example 1, 9, or 47A.');return}
   const matches=allRoutes.filter(function(route){
     if(route.type!==currentMode)return false;
-    return displayRouteNumber(route.short_name).toLocaleLowerCase().includes(query)||String(route.short_name).toLocaleLowerCase().includes(query)||String(route.long_name||'').toLocaleLowerCase().includes(query);
+    const tokens=[displayRouteNumber(route.short_name),String(route.short_name),String(route.long_name||'')];
+    if(canonicalRouteCode(route.short_name)==='A47')tokens.push('47A','47А','A47');
+    return tokens.some(function(token){return normalizeRouteSearchText(token).includes(query)});
   }).sort(function(a,b){return displayRouteNumber(a.short_name).localeCompare(displayRouteNumber(b.short_name),'uk',{numeric:true})}).slice(0,8);
   routeSearchResults.replaceChildren();
   if(!matches.length){routeSearchResults.textContent=tx('Маршрут не знайдено. Перевір номер або вибери інший вид транспорту.','No route found. Check the number or choose another transport type.');return}
@@ -807,7 +822,26 @@ async function loadRoutes(){
   if(!response.ok)throw new Error(tx('Не вдалося отримати список маршрутів (HTTP ','Could not load the route list (HTTP ')+response.status+')');
   const routes=await response.json();
   if(!Array.isArray(routes))throw new Error(tx('API повернув неочікуваний список маршрутів','The API returned an unexpected route list'));
-  allRoutes=routes.filter(function(route){return(route.type==='tram'||route.type==='bus')&&(route.short_name||route.route_short_name)}).map(function(route){return{short_name:route.short_name||route.route_short_name,long_name:route.long_name||route.route_long_name||'',type:route.type,color:safeColor(route.color)}});
+  const requestedRoutes=[
+    {short_name:'A47',long_name:'Санта Барбара — Рясне-2',type:'bus',color:'#3786b5'},
+    {short_name:'A53',long_name:'Санта-Барбара — Галицьке перехрестя',type:'bus',color:'#3786b5'},
+    {short_name:'A39',long_name:'вул. Грінченка — Кривчиці',type:'bus',color:'#3786b5'},
+    {short_name:'A01',long_name:'м. Дубляни — пл. Галицька',type:'bus',color:'#3786b5'},
+    {short_name:'A09',long_name:'вул. Вернадського — с. Муроване — с. Сороки-Львівські',type:'bus',color:'#3786b5'},
+    {short_name:'T01',long_name:'Залізничний вокзал — Погулянка',type:'tram',color:'#3786b5'},
+    {short_name:'T09',long_name:'Залізничний вокзал — вул. Торф’яна',type:'tram',color:'#3786b5'}
+  ];
+  const mergedRoutes=new Map();
+  routes.filter(function(route){return(route.type==='tram'||route.type==='bus')&&(route.short_name||route.route_short_name)}).forEach(function(route){
+    const item={short_name:route.short_name||route.route_short_name,long_name:route.long_name||route.route_long_name||'',type:route.type,color:safeColor(route.color)};
+    const key=item.type+'|'+canonicalRouteCode(item.short_name);
+    if(!mergedRoutes.has(key))mergedRoutes.set(key,item);
+  });
+  requestedRoutes.forEach(function(route){
+    const key=route.type+'|'+canonicalRouteCode(route.short_name);
+    if(!mergedRoutes.has(key))mergedRoutes.set(key,route);
+  });
+  allRoutes=Array.from(mergedRoutes.values());
   if(!allRoutes.length)throw new Error(tx('API не повернув маршрути громадського транспорту','The API returned no public transport routes'));
   renderRouteSearch();
   renderFavoriteRoutes();
